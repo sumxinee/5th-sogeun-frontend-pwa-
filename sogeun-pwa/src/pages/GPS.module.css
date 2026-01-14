@@ -1,0 +1,129 @@
+/* src/pages/GPS/GPS.module.css */
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f2f4f6;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 1. 고정된 거리 원 (10m, 20m, 30m) */
+.staticRing {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed #cfd4da; /* 점선으로 표현 */
+  z-index: 1;
+}
+
+/* 거리 표시 글자 */
+.ringLabel {
+  position: absolute;
+  font-size: 10px;
+  color: #adb5bd;
+  background-color: #f2f4f6;
+  padding: 0 4px;
+  z-index: 2;
+}
+
+/* 2. 내 레벨 반경 (실선, 강조됨) */
+.levelRing {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid #ffab91; /* 토마토색 실선 */
+  background-color: rgba(255, 171, 145, 0.1); /* 안쪽을 살짝 칠함 */
+  z-index: 2;
+  transition: all 0.5s ease; /* 레벨 바뀔 때 부드럽게 커짐 */
+}
+
+/* 3. 파동 효과 (Pulse Animation) */
+.pulseWave {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: rgba(255, 112, 67, 0.6);
+  border-radius: 50%;
+  z-index: 0;
+  animation: pulse 2s infinite ease-out;
+}
+
+/* 애니메이션 정의: 점점 커지면서 투명해짐 */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(40); /* 40배까지 커짐 */
+    opacity: 0;
+  }
+}
+
+/* ... (기존 me, friend, avatar, name, debugInfo 등은 그대로 유지) ... */
+.me {
+  z-index: 10;
+  width: 60px;
+  height: 60px;
+  background-color: #fff;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-size: 30px;
+}
+
+.friend {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+  transition: transform 1s ease; /* 움직임 부드럽게 */
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 4px;
+}
+
+.name {
+  font-size: 12px;
+  color: #4e5968;
+  font-weight: bold;
+}
+
+.debugInfo {
+  position: absolute;
+  bottom: 20px;
+  font-size: 12px;
+  color: #8b95a1;
+  text-align: center;
+}
+
+/* 레벨 조절 버튼 (테스트용) */
+.controls {
+  position: absolute;
+  top: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+}
+.btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
