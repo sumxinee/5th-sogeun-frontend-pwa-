@@ -80,8 +80,8 @@ const GPS = () => {
 
   return (
     <div className={styles.container}>
-      {/* 🌊 파동 효과 */}
-      <div className={styles.pulseWave} />
+      {/* 🌊 파동 효과 - 레벨 범위까지만 확산 */}
+      <div className={styles.pulseWave} data-level={level} />
 
       {/* 📏 고정된 거리 원 (10m, 20m, 30m) */}
       {[10, 20, 30].map((m) => (

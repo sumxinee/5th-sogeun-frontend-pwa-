@@ -7,7 +7,7 @@
   height: 100vh;
   background-color: #f2f4f6;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* 1. 고정된 거리 원 (10m, 20m, 30m) */
@@ -38,25 +38,112 @@
   transition: all 0.5s ease; /* 레벨 바뀔 때 부드럽게 커짐 */
 }
 
-/* 3. 파동 효과 (Pulse Animation) */
+/* 3. 파동 효과 (Pulse Animation) - 레벨 범위까지만 */
 .pulseWave {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: rgba(255, 112, 67, 0.6);
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  z-index: 0;
-  animation: pulse 2s infinite ease-out;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  margin-left: -15px;
+  margin-top: -15px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 105, 180, 0.9) 0%,
+    rgba(255, 105, 180, 0.4) 50%,
+    rgba(255, 105, 180, 0) 100%
+  );
+  animation: waveExpand 2s infinite ease-out;
+  pointer-events: none;
+  transform-origin: center center;
 }
 
-/* 애니메이션 정의: 점점 커지면서 투명해짐 */
-@keyframes pulse {
+/* 기본 애니메이션 - Lv.1 기준 */
+@keyframes waveExpand {
   0% {
     transform: scale(1);
-    opacity: 0.8;
+    opacity: 1;
   }
   100% {
-    transform: scale(40); /* 40배까지 커짐 */
+    transform: scale(20);
+    opacity: 0;
+  }
+}
+
+/* 각 레벨별 애니메이션 */
+.pulseWave[data-level="1"] {
+  animation-name: waveExpandLv1;
+}
+
+@keyframes waveExpandLv1 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(7);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="2"] {
+  animation-name: waveExpandLv2;
+}
+
+@keyframes waveExpandLv2 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(14);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="3"] {
+  animation-name: waveExpandLv3;
+}
+
+@keyframes waveExpandLv3 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(21);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="4"] {
+  animation-name: waveExpandLv4;
+}
+
+@keyframes waveExpandLv4 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(28);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="5"] {
+  animation-name: waveExpandLv5;
+}
+
+@keyframes waveExpandLv5 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(35);
     opacity: 0;
   }
 }
