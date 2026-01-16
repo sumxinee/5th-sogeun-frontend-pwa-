@@ -1,0 +1,216 @@
+/* src/pages/GPS/GPS.module.css */
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f2f4f6;
+  position: relative;
+  overflow: visible;
+}
+
+/* 1. 고정된 거리 원 (10m, 20m, 30m) */
+.staticRing {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed #cfd4da; /* 점선으로 표현 */
+  z-index: 1;
+}
+
+/* 거리 표시 글자 */
+.ringLabel {
+  position: absolute;
+  font-size: 10px;
+  color: #adb5bd;
+  background-color: #f2f4f6;
+  padding: 0 4px;
+  z-index: 2;
+}
+
+/* 2. 내 레벨 반경 (실선, 강조됨) */
+.levelRing {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid #ffab91; /* 토마토색 실선 */
+  background-color: rgba(255, 171, 145, 0.1); /* 안쪽을 살짝 칠함 */
+  z-index: 2;
+  transition: all 0.5s ease; /* 레벨 바뀔 때 부드럽게 커짐 */
+}
+
+/* 3. 파동 효과 (Pulse Animation) - 레벨 범위까지만 */
+.pulseWave {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  margin-left: -15px;
+  margin-top: -15px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 105, 180, 0.9) 0%,
+    rgba(255, 105, 180, 0.4) 50%,
+    rgba(255, 105, 180, 0) 100%
+  );
+  animation: waveExpand 2s infinite ease-out;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+/* 기본 애니메이션 - Lv.1 기준 */
+@keyframes waveExpand {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(20);
+    opacity: 0;
+  }
+}
+
+/* 각 레벨별 애니메이션 */
+.pulseWave[data-level="1"] {
+  animation-name: waveExpandLv1;
+}
+
+@keyframes waveExpandLv1 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(7);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="2"] {
+  animation-name: waveExpandLv2;
+}
+
+@keyframes waveExpandLv2 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(14);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="3"] {
+  animation-name: waveExpandLv3;
+}
+
+@keyframes waveExpandLv3 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(21);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="4"] {
+  animation-name: waveExpandLv4;
+}
+
+@keyframes waveExpandLv4 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(28);
+    opacity: 0;
+  }
+}
+
+.pulseWave[data-level="5"] {
+  animation-name: waveExpandLv5;
+}
+
+@keyframes waveExpandLv5 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(35);
+    opacity: 0;
+  }
+}
+
+/* ... (기존 me, friend, avatar, name, debugInfo 등은 그대로 유지) ... */
+.me {
+  z-index: 10;
+  width: 60px;
+  height: 60px;
+  background-color: #fff;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-size: 30px;
+}
+
+.friend {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+  transition: transform 1s ease; /* 움직임 부드럽게 */
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 4px;
+}
+
+.name {
+  font-size: 12px;
+  color: #4e5968;
+  font-weight: bold;
+}
+
+.debugInfo {
+  position: absolute;
+  bottom: 20px;
+  font-size: 12px;
+  color: #8b95a1;
+  text-align: center;
+}
+
+/* 레벨 조절 버튼 (테스트용) */
+.controls {
+  position: absolute;
+  top: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+}
+.btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
