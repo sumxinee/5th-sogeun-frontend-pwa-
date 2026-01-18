@@ -1,14 +1,15 @@
+/* index.css */
 :root {
-  --color-primary: #FFAB91;       /* 메인 주황색 (버튼 등) */
-  --color-primary-dark: #FF7043;  /* 진한 주황색 (호버, 강조) */
+  --color-primary: #FFAB91;        /* 메인 주황색 (버튼 등) */
+  --color-primary-dark: #FF7043;   /* 진한 주황색 (호버, 강조) */
   
-  --color-text-main: #5D4037;     /* 메인 텍스트 (진한 갈색) */
-  --color-text-sub: #A09085;      /* 서브 텍스트 (연한 갈색, placeholder) */
-  --color-text-link: #FF7043;     /* 링크 텍스트 */
+  --color-text-main: #5D4037;      /* 메인 텍스트 (진한 갈색) */
+  --color-text-sub: #A09085;       /* 서브 텍스트 (연한 갈색, placeholder) */
+  --color-text-link: #FF7043;      /* 링크 텍스트 */
 
-  --color-bg-app: #ffffff;        /* 앱 배경색 */
-  --color-bg-input: #FFFDF9;      /* 인풋창 배경색 (아이보리) */
-  --color-border: #ddd;           /* 테두리 색 */
+  --color-bg-app: #ffffff;         /* 앱 배경색 */
+  --color-bg-input: #FFFDF9;       /* 인풋창 배경색 (아이보리) */
+  --color-border: #ddd;            /* 테두리 색 */
 
   /* [공통 스타일] 둥글기, 폰트 크기 등 */
   --radius-input: 25px;
