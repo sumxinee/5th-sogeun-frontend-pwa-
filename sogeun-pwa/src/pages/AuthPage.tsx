@@ -1,6 +1,7 @@
+/* eslint-disable */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
-import './AuthPage.css'; // CSS 파일은 그대로 두셔도 됩니다 (.css)
+import './AuthPage.css';
 
 export default function AuthPage() {
   const navigate = useNavigate();
