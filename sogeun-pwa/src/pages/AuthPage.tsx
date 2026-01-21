@@ -1,7 +1,6 @@
-/* eslint-disable */
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import './AuthPage.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./AuthPage.css";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -10,39 +9,39 @@ export default function AuthPage() {
   const [isLoginMode, setIsLoginMode] = useState(true);
 
   // 입력값 상태 관리 (타입 자동 추론됨: string)
-  const [id, setId] = useState('');
-  const [pw, setPw] = useState('');
-  const [pwCheck, setPwCheck] = useState(''); 
-  const [nickname, setNickname] = useState(''); 
+  const [id, setId] = useState("");
+  const [pw, setPw] = useState("");
+  const [pwCheck, setPwCheck] = useState("");
+  const [nickname, setNickname] = useState("");
 
   // API 주소
- /* const LOGIN_URL = 'http://15.164.164.66:8080/api/auth/login';
+  /* const LOGIN_URL = 'http://15.164.164.66:8080/api/auth/login';
   const SIGNUP_URL = 'http://15.164.164.66:8080/api/auth/signup';*/
 
   // 모드 전환 시 입력값 초기화
   const toggleMode = () => {
     setIsLoginMode(!isLoginMode);
-    setId('');
-    setPw('');
-    setPwCheck('');
-    setNickname('');
+    setId("");
+    setPw("");
+    setPwCheck("");
+    setNickname("");
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!id || !pw) {
-      alert('아이디와 비밀번호를 입력해주세요.');
+      alert("아이디와 비밀번호를 입력해주세요.");
       return;
     }
 
     // --- [테스트 모드 시작] ---
     console.log(`[TEST] 로그인 시도: ID=${id}, PW=${pw}`);
-    
+
     // 1초 뒤에 무조건 성공했다고 가정!
     setTimeout(() => {
-        alert('토큰 없이 테스트 로그인 성공! (개발용)');
-        navigate('/', { state: { userId: id } });
+      alert("토큰 없이 테스트 로그인 성공! (개발용)");
+      navigate("/", { state: { userId: id } });
     }, 1000); // 1초 로딩 흉내
 
     /* 진짜 API 코드는 잠시 꺼둠
@@ -63,18 +62,18 @@ export default function AuthPage() {
     }
     */
     // --- [테스트 모드 끝] ---
-  }; 
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!id || !pw || !pwCheck || !nickname) {
-      alert('모든 정보를 입력해주세요.');
+      alert("모든 정보를 입력해주세요.");
       return;
     }
 
     if (pw !== pwCheck) {
-      alert('비밀번호가 일치하지 않습니다.');
+      alert("비밀번호가 일치하지 않습니다.");
       return;
     }
 
@@ -82,8 +81,8 @@ export default function AuthPage() {
     console.log(`[TEST] 회원가입 정보: ID=${id}, Nick=${nickname}`);
 
     setTimeout(() => {
-        alert('테스트 회원가입 완료! 로그인 해주세요.');
-        setIsLoginMode(true); // 로그인 화면으로 전환되는지 확인
+      alert("테스트 회원가입 완료! 로그인 해주세요.");
+      setIsLoginMode(true); // 로그인 화면으로 전환되는지 확인
     }, 1000);
 
     /* 진짜 API 코드는 잠시 꺼둠
@@ -108,12 +107,12 @@ export default function AuthPage() {
 
   return (
     <div className="auth-container">
-      <h1 className="auth-title">
-        {isLoginMode ? '로그인' : '회원가입'}
-      </h1>
+      <h1 className="auth-title">{isLoginMode ? "로그인" : "회원가입"}</h1>
 
-      <form className="auth-form" onSubmit={isLoginMode ? handleLogin : handleSignup}>
-        
+      <form
+        className="auth-form"
+        onSubmit={isLoginMode ? handleLogin : handleSignup}
+      >
         <input
           className="auth-input"
           type="text"
@@ -153,16 +152,16 @@ export default function AuthPage() {
         )}
 
         <button type="submit" className="auth-button">
-          {isLoginMode ? '로그인' : '가입하기'}
+          {isLoginMode ? "로그인" : "가입하기"}
         </button>
       </form>
 
       <div className="toggle-container">
         <span>
-          {isLoginMode ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
+          {isLoginMode ? "계정이 없으신가요?" : "이미 계정이 있으신가요?"}
         </span>
         <button type="button" className="toggle-link" onClick={toggleMode}>
-          {isLoginMode ? '회원가입하기' : '로그인하기'}
+          {isLoginMode ? "회원가입하기" : "로그인하기"}
         </button>
       </div>
     </div>

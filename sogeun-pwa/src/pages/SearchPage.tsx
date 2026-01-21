@@ -50,6 +50,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
       const res = await axios.get(`https://itunes.apple.com/search`, {
         params: { term: query, entity: "song", limit: 20, country: "kr" },
       });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mappedTracks: Track[] = res.data.results.map((item: any) => ({
         trackId: item.trackId,
         trackName: item.trackName,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -8,7 +8,7 @@ import GPS from "./pages/GPS";
 import SearchPage from "./pages/SearchPage";
 import type { Track } from "./pages/SearchPage";
 
-// [음악 & GPS 기능] 
+// [음악 & GPS 기능]
 // 원래 feat/spotify... 브랜치에 있던 App의 로직을 'MainScreen'이라는 이름으로 분리했습니다.
 const MainScreen = () => {
   const [currentPage, setCurrentPage] = useState<"gps" | "search">("gps");
