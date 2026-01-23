@@ -1,3 +1,8 @@
+/* eslint-disable */
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; 
+// import './AuthPage.css'; // 👈 기존 import 제거
+import styles from './AuthPage.module.css'; // 👈 CSS Module import 추가
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AuthPage.css";
@@ -40,6 +45,11 @@ export default function AuthPage() {
 
     // 1초 뒤에 무조건 성공했다고 가정!
     setTimeout(() => {
+        alert('토큰 없이 테스트 로그인 성공! (개발용)');
+        /* 원래 코드
+        navigate('/', { state: { userId: id } });*/
+        // 👇 테스트를 위해 이렇게 잠시 변경!
+        navigate('/profile/edit');
       alert("토큰 없이 테스트 로그인 성공! (개발용)");
       navigate("/", { state: { userId: id } });
     }, 1000); // 1초 로딩 흉내
@@ -106,6 +116,13 @@ export default function AuthPage() {
   };
 
   return (
+    <div className={styles.container}>
+      <h1 className={styles.title}>
+        {isLoginMode ? '로그인' : '회원가입'}
+      </h1>
+
+      <form className={styles.form} onSubmit={isLoginMode ? handleLogin : handleSignup}>
+        
     <div className="auth-container">
       <h1 className="auth-title">{isLoginMode ? "로그인" : "회원가입"}</h1>
 
@@ -114,7 +131,7 @@ export default function AuthPage() {
         onSubmit={isLoginMode ? handleLogin : handleSignup}
       >
         <input
-          className="auth-input"
+          className={styles.input}
           type="text"
           placeholder="아이디"
           value={id}
@@ -123,7 +140,7 @@ export default function AuthPage() {
 
         {!isLoginMode && (
           <input
-            className="auth-input"
+            className={styles.input}
             type="text"
             placeholder="닉네임"
             value={nickname}
@@ -132,7 +149,7 @@ export default function AuthPage() {
         )}
 
         <input
-          className="auth-input"
+          className={styles.input}
           type="password"
           placeholder="비밀번호"
           value={pw}
@@ -142,7 +159,7 @@ export default function AuthPage() {
 
         {!isLoginMode && (
           <input
-            className="auth-input"
+            className={styles.input}
             type="password"
             placeholder="비밀번호 확인"
             value={pwCheck}
@@ -151,15 +168,19 @@ export default function AuthPage() {
           />
         )}
 
+        <button type="submit" className={styles.button}>
+          {isLoginMode ? '로그인' : '가입하기'}
         <button type="submit" className="auth-button">
           {isLoginMode ? "로그인" : "가입하기"}
         </button>
       </form>
 
-      <div className="toggle-container">
+      <div className={styles.toggleContainer}>
         <span>
           {isLoginMode ? "계정이 없으신가요?" : "이미 계정이 있으신가요?"}
         </span>
+        <button type="button" className={styles.toggleLink} onClick={toggleMode}>
+          {isLoginMode ? '회원가입하기' : '로그인하기'}
         <button type="button" className="toggle-link" onClick={toggleMode}>
           {isLoginMode ? "회원가입하기" : "로그인하기"}
         </button>
