@@ -1,7 +1,9 @@
+/* eslint-disable */
 import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
+// 페이지 컴포넌트들
 import AuthPage from "./pages/AuthPage";
 import GPS from "./pages/GPS";
 import SearchPage from "./pages/SearchPage";
