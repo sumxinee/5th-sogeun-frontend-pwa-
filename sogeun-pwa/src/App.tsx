@@ -1,7 +1,3 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import AuthPage from './pages/AuthPage';
-import GPS from "./pages/GPS"; // main 브랜치에서 가져온 GPS 추가
-import ProfileEditPage from './pages/ProfileEditPage';
 import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
