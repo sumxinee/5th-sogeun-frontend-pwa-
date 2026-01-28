@@ -40,11 +40,11 @@ export default function AuthPage() {
 
     try {
       // 🚀 실제 백엔드와 통신 시도
-      const response = await axios.post(`${API_URL}/login`, {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         loginId: id,
         password: pw,
       });
-
+      console.log(API_URL);
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
         alert("소근에 오신 것을 환영해요!");
@@ -63,6 +63,7 @@ export default function AuthPage() {
 
     if (!id || !pw || !pwCheck || !nickname) {
       alert("모든 정보를 입력해주세요.");
+      0;
       return;
     }
 
@@ -72,7 +73,7 @@ export default function AuthPage() {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/signup`, {
+      const response = await axios.post(`${API_URL}/api/auth/signup`, {
         loginId: id,
         password: pw,
         nickname: nickname,
