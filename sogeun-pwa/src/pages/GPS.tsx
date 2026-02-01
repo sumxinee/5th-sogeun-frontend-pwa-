@@ -1,16 +1,15 @@
+/* eslint-disable */
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-// 'verbatimModuleSyntax' 에러 해결을 위한 type import
 import type { Track } from "./SearchPage";
 
 interface GPSProps {
   onPlusClick: () => void;
   currentTrack: Track | null;
-  // App.tsx에서 전달받는 함수 타입 누락 해결
   onSelectTrack: (track: Track) => void;
 }
 
-// 타입 정의 (기존 코드 유지 및 위경도 필드 추가)
+// ------------------- [타입 정의] -------------------
 interface HUDCircle {
   id: number;
   r: number;
@@ -18,16 +17,18 @@ interface HUDCircle {
   o: number;
   duration: number;
 }
+
 interface DetectedUser {
   id: number;
   name: string;
   song: string;
   distance: string;
-  lat: number; // 실제 위도
-  lng: number; // 실제 경도
-  angle: number; // 계산될 각도
-  radius: number; // 계산될 반경
+  lat: number;
+  lng: number;
+  angle: number;
+  radius: number;
 }
+
 interface Particle {
   id: number;
   top: string;
@@ -37,69 +38,26 @@ interface Particle {
   duration: number;
 }
 
+// ------------------- [아이콘 컴포넌트] -------------------
 const Icons = {
   Home: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-7 w-7"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
   ),
   Plus: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-9 w-9 text-white"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={3}
-        d="M12 4v16m8-8H4"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
     </svg>
   ),
   Profile: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-7 w-7"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   ),
   Music: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
     </svg>
   ),
 };
@@ -109,30 +67,16 @@ const GPS: React.FC<GPSProps> = ({
   currentTrack,
   onSelectTrack,
 }) => {
-  /* ---------------------------------------------------------
-     [기존 코드: 주석 처리] 
-     기존에는 고정된 angle과 radius 데이터만 사용했습니다.
-  ------------------------------------------------------------
-  const [nearbyUsers] = useState<DetectedUser[]>([
-    {
-      id: 1,
-      name: "Coimhia",
-      song: "밤의 산책",
-      distance: "50m",
-      angle: -45,
-      radius: 80,
-    },
-  ]);
-  --------------------------------------------------------- */
+  // ------------------- [State & Data] -------------------
 
-  // [신규 로직: 실시간 위치 기반 사용자 관리]
+  // 1. 주변 사용자 데이터 (Geolocation 로직 포함)
   const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([
     {
       id: 1,
       name: "Coimhia",
       song: "밤의 산책",
       distance: "계산중...",
-      lat: 37.5562, // 주변 샘플 좌표 (서울역 근처)
+      lat: 37.5562,
       lng: 126.9725,
       angle: 0,
       radius: 0,
@@ -142,50 +86,14 @@ const GPS: React.FC<GPSProps> = ({
       name: "Hongik",
       song: "Campus Life",
       distance: "계산중...",
-      lat: 37.5506, // 주변 샘플 좌표
+      lat: 37.5506,
       lng: 126.9257,
       angle: 0,
       radius: 0,
     },
   ]);
 
-  // 핵심: Geolocation API를 이용한 실시간 위치 추적 및 레이더 좌표 계산
-  useEffect(() => {
-    if (!("geolocation" in navigator)) return;
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-
-        setNearbyUsers((prev) =>
-          prev.map((user) => {
-            // 위도/경도 차이 계산
-            const dy = user.lat - latitude;
-            const dx = user.lng - longitude;
-
-            // 1. 각도 계산 (Math.atan2를 활용하여 레이더상의 각도 도출)
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-            // 2. 거리 계산 및 레이더 반경(radius)으로 변환
-            const rawDist = Math.sqrt(dx * dx + dy * dy) * 100000;
-            const radius = Math.min(rawDist, 140); // 레이더 크기(140px) 내로 제한
-
-            return {
-              ...user,
-              angle,
-              radius,
-              distance: `${Math.floor(rawDist / 10)}m`,
-            };
-          }),
-        );
-      },
-      (error) => console.error("위치 추적 오류:", error),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
-
+  // 2. 배경 파티클 (하얀 점들)
   const [particles] = useState<Particle[]>(() =>
     Array.from({ length: 40 }, (_, i) => ({
       id: i,
@@ -194,9 +102,10 @@ const GPS: React.FC<GPSProps> = ({
       size: Math.random() * 2.2 + 0.2,
       opacity: Math.random() * 0.4 + 0.1,
       duration: Math.random() * 40 + 20,
-    })),
+    }))
   );
 
+  // 3. HUD 서클 (레이더 안에서 퍼지는 원들)
   const [hudCircles] = useState<HUDCircle[]>(() => {
     const circles: HUDCircle[] = [];
     let currentR = 20;
@@ -213,15 +122,52 @@ const GPS: React.FC<GPSProps> = ({
     return circles;
   });
 
+  // 4. 레이더 장식용 회전 선들
   const extraSegments = [
     { r: 145, w: 1, d: "4 4", s: 20, dir: 1 },
     { r: 125, w: 3, d: "40 80", s: 15, dir: -1 },
     { r: 70, w: 2, d: "25 65", s: 10, dir: -1 },
   ];
 
+  // 5. 심장박동 그래프 Path
   const centeredPath =
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
+  // ------------------- [Effect: Geolocation] -------------------
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+
+        setNearbyUsers((prev) =>
+          prev.map((user) => {
+            const dy = user.lat - latitude;
+            const dx = user.lng - longitude;
+
+            // 각도 및 거리 계산
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            const rawDist = Math.sqrt(dx * dx + dy * dy) * 100000;
+            const radius = Math.min(rawDist, 140); // 140px 반경 제한
+
+            return {
+              ...user,
+              angle,
+              radius,
+              distance: `${Math.floor(rawDist / 10)}m`,
+            };
+          })
+        );
+      },
+      (error) => console.error("위치 추적 오류:", error),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  // ------------------- [Render] -------------------
   return (
     <div
       className="flex flex-col w-full max-w-md mx-auto min-h-screen font-sans relative overflow-hidden text-white"
@@ -230,6 +176,7 @@ const GPS: React.FC<GPSProps> = ({
           "linear-gradient(135deg, #FBC2EB 0%, #A6C1EE 50%, #84FAB0 100%)",
       }}
     >
+      {/* 1. 배경 패턴 */}
       <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(rgba(103,232,249,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20 mix-blend-screen" />
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         {particles.map((p) => (
@@ -257,6 +204,7 @@ const GPS: React.FC<GPSProps> = ({
         ))}
       </div>
 
+      {/* 2. 상단 헤더 */}
       <div className="flex justify-between items-start pt-12 px-6 z-10">
         <div>
           <h1 className="text-2xl font-black tracking-tighter leading-none drop-shadow-md">
@@ -271,8 +219,10 @@ const GPS: React.FC<GPSProps> = ({
         </div>
       </div>
 
-      {/* 레이더 영역 */}
+      {/* 3. 메인 레이더 영역 (심장박동, 파동, 회전 링 모두 포함) */}
       <div className="relative flex flex-col items-center justify-center w-full aspect-square mt-4 mb-4 z-10 px-6">
+        
+        {/* A. 3단 파동 (Expanding Waves) */}
         {[0, 2.5, 5.0].map((delay) => (
           <motion.div
             key={`wave-${delay}`}
@@ -297,6 +247,7 @@ const GPS: React.FC<GPSProps> = ({
           />
         ))}
 
+        {/* B. 회전하는 점선 링들 (Rotating Segments) */}
         <div className="absolute inset-[-80px] z-15 pointer-events-none">
           <svg viewBox="0 0 420 420" className="w-full h-full overflow-visible">
             {extraSegments.map((seg, i) => (
@@ -322,6 +273,7 @@ const GPS: React.FC<GPSProps> = ({
           </svg>
         </div>
 
+        {/* C. HUD Circles (내부에서 퍼지는 원) */}
         {hudCircles.map((circle, i) => (
           <motion.div
             key={circle.id}
@@ -342,7 +294,7 @@ const GPS: React.FC<GPSProps> = ({
           />
         ))}
 
-        {/* 핵심: 실시간으로 변하는 user.angle과 user.radius 적용 */}
+        {/* D. 사용자 위치 표시 (Dots & Tooltips) */}
         {nearbyUsers.map((user) => (
           <div
             key={user.id}
@@ -356,6 +308,7 @@ const GPS: React.FC<GPSProps> = ({
               transition={{ repeat: Infinity, duration: 2 }}
               className="w-4 h-4 bg-white rounded-full shadow-[0_0_15px_white] z-30"
             />
+            {/* 툴팁 (이름표) */}
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 100, opacity: 1 }}
@@ -370,41 +323,9 @@ const GPS: React.FC<GPSProps> = ({
           </div>
         ))}
 
-        <div className="absolute bottom-[-10px] z-[100] pointer-events-auto">
-          <AnimatePresence>
-            {currentTrack && (
-              <motion.div
-                key="player-card"
-                initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                onClick={() => onSelectTrack(currentTrack)}
-                className="bg-white/30 backdrop-blur-xl border border-white/40 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 min-w-[150px] cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-white/20 overflow-hidden border border-white/40">
-                  <img
-                    src={currentTrack.artworkUrl100}
-                    alt="art"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="text-[8px] font-black text-pink-500 tracking-tighter mb-0.5">
-                    NOW PLAYING
-                  </p>
-                  <p className="text-[12px] font-black truncate max-w-[100px] leading-tight text-white">
-                    {currentTrack.trackName}
-                  </p>
-                  <p className="text-[9px] opacity-70 font-bold truncate max-w-[90px] text-white/80">
-                    {currentTrack.artistName}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
+        {/* E. 중앙 레이더 스캐너 & 심장박동 그래프 */}
         <div className="relative flex items-center justify-center w-[280px] h-[280px] rounded-full">
+          {/* 스캐닝 라인 (빙글빙글 도는 효과) */}
           <div className="absolute inset-[-35px] z-20 pointer-events-none">
             <motion.svg
               viewBox="0 0 100 100"
@@ -435,7 +356,11 @@ const GPS: React.FC<GPSProps> = ({
               />
             </motion.svg>
           </div>
+          
+          {/* 중앙 흰색 테두리 */}
           <div className="absolute inset-0 rounded-full border-[10px] border-white shadow-[0_0_80px_rgba(255,255,255,1)] z-10" />
+          
+          {/* 심장박동 그래프 (Heartbeat Path) */}
           <div className="w-[450px] h-[260px] overflow-visible relative flex items-center justify-center z-50">
             <svg
               width="100%"
@@ -468,12 +393,14 @@ const GPS: React.FC<GPSProps> = ({
         </div>
       </div>
 
+      {/* 4. 반경 설정 버튼 */}
       <div className="flex justify-center z-10 mt-6 mb-6">
         <button className="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/40 text-[11px] font-black shadow-lg">
           내 반경 350m
         </button>
       </div>
 
+      {/* 5. 사용자 리스트 (스크롤 가능) */}
       <div className="flex-1 px-6 pb-32 z-10 overflow-y-auto space-y-4 scrollbar-hide">
         {nearbyUsers.map((user) => (
           <div
@@ -497,14 +424,56 @@ const GPS: React.FC<GPSProps> = ({
               </div>
               <div className="flex items-center justify-end font-black text-[10px] opacity-80">
                 <div className="w-1.5 h-1.5 bg-pink-400 rounded-full mr-1.5" />
-                {user.distance} {/* 실시간 거리 표시 */}
+                {user.distance}
               </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* 6. 하단 내비게이션 & 플로팅 플레이어 */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[85%] h-20 bg-white/95 backdrop-blur-3xl rounded-[40px] border border-white/50 flex justify-around items-center px-6 shadow-2xl z-[100]">
+        
+        {/* 플레이어 (재생중일 때만 팝업) */}
+        <AnimatePresence>
+          {currentTrack && (
+            <motion.div
+              key="player-card"
+              initial={{ opacity: 0, scale: 0.8, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: -260 }} // 위치를 위로 올림
+              exit={{ opacity: 0, scale: 0.5 }}
+              onClick={() => onSelectTrack(currentTrack)}
+              className="absolute bottom-1/2 left-0 right-0 mx-auto bg-white/30 backdrop-blur-xl border border-white/40 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] cursor-pointer z-[110]
+
+              w-fit
+              px-4 py-2
+              gap-3
+              justify-center
+              "
+            >
+              <div className="w-9 h-9 rounded-xl bg-white/20 overflow-hidden border border-white/40">
+                <img
+                  src={currentTrack.artworkUrl100}
+                  alt="art"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <p className="text-[8px] font-black text-pink-500 tracking-tighter mb-0.5">
+                  NOW PLAYING
+                </p>
+                <p className="text-[12px] font-black truncate max-w-[100px] leading-tight text-white">
+                  {currentTrack.trackName}
+                </p>
+                <p className="text-[9px] opacity-70 font-bold truncate max-w-[110px] text-white/80">
+                  {currentTrack.artistName}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 내비 버튼들 */}
         <button className="flex flex-col items-center text-pink-500 font-black">
           <Icons.Home />
           <span className="text-[10px] mt-1">홈</span>

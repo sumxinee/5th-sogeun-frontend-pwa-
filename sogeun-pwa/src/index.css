@@ -1,62 +1,47 @@
 @import "tailwindcss";
 
+/* =========================================
+   0. 전역 설정 (Variables & Body)
+   ========================================= */
 :root {
-  --bg-color: #FFFFFF;          /* 배경: 완전 흰색 */
-  --main-color: #FF9E9E;        /* 버튼: 화사한 코랄 핑크 */
-  --main-dark: #FF8585;         /* 버튼 호버: 조금 더 진한 핑크 */
+  /* 🎨 소근(Sogun) 포인트 컬러 */
+  --sogun-cyan: #00F0FF; /* 레이더의 밝은 민트/하늘색 */
+  --sogun-pink: #FF9E9E;
   
-  --input-bg: #F3F3F3;          /* 입력창: 아주 연한 회색 */
-  --nav-bg: #F9F9F9;            /* 하단바: 밝은 회색 */
-  
-  --text-color: #333333;        /* 글자: 진한 검정 */
-  --border-radius-btn: 999px;   /* 버튼: 완전 둥근 알약 모양 */
-  --border-radius-input: 12px;  /* 입력창: 살짝 둥글게 */
-  
-  --color-primary: #FFAB91;        /* 메인 주황색 (버튼 등) */
-  --color-primary-dark: #FF7043;   /* 진한 주황색 (호버, 강조) */
-  
-  --color-text-main: #5D4037;      /* 메인 텍스트 (진한 갈색) */
-  --color-text-sub: #A09085;       /* 서브 텍스트 (연한 갈색, placeholder) */
-  --color-text-link: #FF7043;      /* 링크 텍스트 */
-  --color-primary: #ffab91; /* 메인 주황색 (버튼 등) */
-  --color-primary-dark: #ff7043; /* 진한 주황색 (호버, 강조) */
-
-  --color-text-main: #5d4037; /* 메인 텍스트 (진한 갈색) */
-  --color-text-sub: #a09085; /* 서브 텍스트 (연한 갈색, placeholder) */
-  --color-text-link: #ff7043; /* 링크 텍스트 */
-
-  --color-bg-app: #ffffff; /* 앱 배경색 */
-  --color-bg-input: #fffdf9; /* 인풋창 배경색 (아이보리) */
-  --color-border: #ddd; /* 테두리 색 */
-
-  /* [공통 스타일] 둥글기, 폰트 크기 등 */
-  --radius-input: 25px;
-  --radius-button: 30px;
+  /* ✍️ 텍스트 컬러 */
+  --text-white: #FFFFFF;
+  --text-sub: rgba(255, 255, 255, 0.8);
 }
 
-/* PWA 레이아웃 */
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  justify-content: center;
+  padding: 0;
   min-height: 100vh;
-  background-color: #f0f2f5; /* PC 배경 */
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* 그라데이션 */
+  background: linear-gradient(
+    169deg,
+    #f8c1e9 0%,
+    #c3c3ec 34.81%,
+    #9fc3e9 66.28%,
+    #6bcda6 99.18%
+  );
+  
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* 배경 고정 */
+  color: var(--text-white);
 }
 
 #root {
   width: 100%;
-  max-width: 480px;
   min-height: 100vh;
-  background-color: var(--color-bg-app); /* 변수 사용 */
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
   position: relative;
+  overflow-x: hidden;
 }
 
 button {
@@ -64,5 +49,368 @@ button {
   border: none;
   padding: 0;
   cursor: pointer;
-  font-family: inherit;
+}
+
+/* =========================================
+   1. 로그인 / 회원가입 페이지
+   ========================================= */
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 30px;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.auth-form {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.auth-input {
+  width: 100%;
+  height: 50px;
+  padding: 0 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 15px;
+  outline: none;
+  backdrop-filter: blur(5px);
+}
+
+.auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-input:focus {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: white;
+}
+
+.auth-button {
+  height: 50px;
+  border-radius: 25px;
+  background: white;
+  color: #EAA6D8;
+  font-weight: 800;
+  font-size: 16px;
+  border: none;
+  margin-top: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.auth-toggle-link {
+  margin-top: 20px;
+  color: white;
+  text-decoration: underline;
+  font-weight: bold;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* =========================================
+   2. GPS (메인 레이더) 페이지
+   ========================================= */
+.gps-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 60px;
+  overflow: hidden; 
+}
+
+/* 상단 텍스트 */
+.gps-header {
+  position: absolute;
+  top: 50px;
+  left: 24px;
+  width: calc(100% - 48px);
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  z-index: 10;
+}
+.gps-header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.gps-header p {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-sub);
+  margin-top: 4px;
+}
+.gps-level-badge {
+    background: rgba(255, 158, 158, 0.8);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* 회전하는 민트색 레이더 링 */
+.gps-spinning-ring {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  border: 4px solid transparent; 
+  border-top-color: var(--sogun-cyan); /* 민트색 포인트 */
+  border-left-color: rgba(0, 240, 255, 0.3);
+  filter: drop-shadow(0 0 10px var(--sogun-cyan));
+  z-index: 2;
+  animation: spin-radar 4s linear infinite; /* 계속 회전 */
+}
+
+@keyframes spin-radar {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 배경 정적 링 */
+.gps-static-ring {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1;
+}
+
+/* 가로지르는 하얀 선 */
+.gps-container::after {
+  content: "";
+  position: absolute;
+  top: 40%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* 파동 효과 (Pulse Logic 유지) */
+.gps-pulse-wave {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(0, 240, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  animation: waveExpand 2s infinite ease-out;
+}
+
+/* 레벨별 애니메이션 매핑 */
+.gps-pulse-wave[data-level="1"] { animation-name: waveExpandLv1; }
+.gps-pulse-wave[data-level="2"] { animation-name: waveExpandLv2; }
+.gps-pulse-wave[data-level="3"] { animation-name: waveExpandLv3; }
+.gps-pulse-wave[data-level="4"] { animation-name: waveExpandLv4; }
+.gps-pulse-wave[data-level="5"] { animation-name: waveExpandLv5; }
+
+@keyframes waveExpandLv1 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(7); opacity: 0; } }
+@keyframes waveExpandLv2 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(14); opacity: 0; } }
+@keyframes waveExpandLv3 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(21); opacity: 0; } }
+@keyframes waveExpandLv4 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(28); opacity: 0; } }
+@keyframes waveExpandLv5 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(35); opacity: 0; } }
+
+/* 나 (중앙 아이콘) */
+.gps-me {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 15px white, 0 0 25px var(--sogun-cyan);
+  z-index: 20;
+}
+
+/* 주변 친구 레이더 표시용 */
+.gps-friend {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 30;
+  cursor: pointer;
+  /* 중요: 회전 및 위치 계산을 위해 transform은 인라인 스타일로 제어 */
+}
+
+.gps-avatar {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.gps-friend:hover .gps-avatar {
+  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.gps-name {
+  margin-top: 6px;
+  font-size: 11px;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================
+   3. 프로필 수정 페이지
+   ========================================= */
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+}
+
+.profile-text-input {
+  width: 100%;
+  height: 50px;
+  padding: 0 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 15px;
+  outline: none;
+  backdrop-filter: blur(5px);
+}
+
+.profile-text-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.profile-text-input:focus {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: white;
+}
+
+.profile-submit-btn {
+  height: 50px;
+  width: 100%;
+  border-radius: 25px;
+  background: white;
+  color: #EAA6D8;
+  font-weight: 800;
+  font-size: 16px;
+  border: none;
+  margin-top: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+/* =========================================
+   4. 하단 내비게이션 (공통)
+   ========================================= */
+.bottom-nav {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 70px;
+  background: #FFFFFF;
+  border-radius: 35px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #CCCCCC;
+  cursor: pointer;
+  width: 40px;
+  transition: color 0.2s;
+}
+
+.nav-item.active {
+  color: #FF6B6B;
+}
+
+.nav-text {
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.nav-plus-wrapper {
+  position: relative;
+  top: 0;
+}
+
+.nav-plus-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #F5F5F5;
+  color: #CCCCCC;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+  font-size: 24px;
+  cursor: pointer;
 }

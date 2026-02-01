@@ -20,7 +20,7 @@ const MainScreen = () => {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black">
+    <div className="relative w-full h-screen overflow-hidden bg-transparent">
       <AnimatePresence mode="wait">
         {currentPage === "gps" ? (
           <motion.div key="gps-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0">
