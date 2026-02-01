@@ -1,41 +1,76 @@
+@import "tailwindcss";
+
 :root {
-  --color-primary: #FFAB91;       /* 메인 주황색 (버튼 등) */
-  --color-primary-dark: #FF7043;  /* 진한 주황색 (호버, 강조) */
+  /* 🎨 메인 컬러 팔레트 */
+  --main-color: #FF9E9E;         /* 코랄 핑크 */
+  --main-dark: #FF8585;          /* 진한 핑크 (호버용) */
   
-  --color-text-main: #5D4037;     /* 메인 텍스트 (진한 갈색) */
-  --color-text-sub: #A09085;      /* 서브 텍스트 (연한 갈색, placeholder) */
-  --color-text-link: #FF7043;     /* 링크 텍스트 */
+  --color-primary: #FFAB91;      /* 메인 주황 (버튼 등) */
+  --color-primary-dark: #FF7043; /* 진한 주황 (강조) */
 
-  --color-bg-app: #ffffff;        /* 앱 배경색 */
-  --color-bg-input: #FFFDF9;      /* 인풋창 배경색 (아이보리) */
-  --color-border: #ddd;           /* 테두리 색 */
+  /* ✍️ 텍스트 컬러 */
+  --text-color: #333333;         /* 기본 검정 */
+  --color-text-main: #5D4037;    /* 진한 갈색 (제목 등 분위기 있는 텍스트) */
+  --color-text-sub: #A09085;     /* 연한 갈색 (설명, placeholder) */
+  --color-text-link: #FF7043;    /* 링크 색상 */
 
-  /* [공통 스타일] 둥글기, 폰트 크기 등 */
-  --radius-input: 25px;
-  --radius-button: 30px;
+  /* 🖼️ 배경 및 컴포넌트 */
+  --input-bg: #F3F3F3;           /* 입력창 배경 (회색조) */
+  --nav-bg: #F9F9F9;             /* 하단바 배경 */
+  --color-bg-input: #FFFDF9;     /* 입력창 배경 (아이보리조) - 필요시 선택 사용 */
+  
+  /* 📏 모양 (Radius) */
+  --border-radius-btn: 999px;    /* 알약 모양 */
+  --border-radius-input: 12px;   /* 살짝 둥근 사각형 */
+  --radius-button: 30px;         /* (추가된 스타일) */
 }
 
-/* PWA 레이아웃 */
-* { box-sizing: border-box; }
+/* 모든 요소 박스 크기 기준 통일 */
+* {
+  box-sizing: border-box;
+}
 
+/* 📱 Body: 전체 배경 그라데이션 + PWA 중앙 정렬 */
 body {
   margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  
+  /* PWA를 화면 중앙에 두기 위한 Flex 설정 */
   display: flex;
   justify-content: center;
-  min-height: 100vh;
-  background-color: #f0f2f5; /* PC 배경 */
+  
+  /* 폰트 설정 */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* ✨ 피그마에서 가져온 그라데이션 배경 ✨ */
+  background: linear-gradient(
+    169deg,
+    #f8c1e9 0%,
+    #c3c3ec 34.81%,
+    #9fc3e9 66.28%,
+    #6bcda6 99.18%
+  );
+  
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* 스크롤해도 배경 고정 (추천) */
 }
 
+/* 📱 Root: 실제 앱이 들어가는 영역 */
 #root {
   width: 100%;
-  max-width: 480px;
+  max-width: 480px; /* 모바일 너비 제한 */
   min-height: 100vh;
-  background-color: var(--color-bg-app); /* 변수 사용 */
+  
+  /* 중요: 배경을 투명하게 해야 body의 그라데이션이 보임 */
+  background-color: transparent; 
+  
+  /* 앱 컨텐츠가 너무 퍼지지 않게 그림자 추가 (선택사항) */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
   position: relative;
 }
 
+/* 버튼 기본 스타일 초기화 */
 button {
   background: none;
   border: none;
