@@ -1,8 +1,8 @@
 /* eslint-disable */
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // axios 임포트 확인
-import styles from "./AuthPage.module.css";
+import axios from "axios";
+import '../index.css'; // 전역 CSS 불러오기
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ export default function AuthPage() {
   const API_URL =
     import.meta.env.VITE_API_URL ||
     "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+
   // 모드 전환 시 입력값 초기화
   const toggleMode = () => {
     setIsLoginMode(!isLoginMode);
@@ -39,12 +40,11 @@ export default function AuthPage() {
     }
 
     try {
-      // 🚀 실제 백엔드와 통신 시도
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         loginId: id,
         password: pw,
       });
-      console.log(API_URL);
+      
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
         alert("소근에 오신 것을 환영해요!");
@@ -63,7 +63,6 @@ export default function AuthPage() {
 
     if (!id || !pw || !pwCheck || !nickname) {
       alert("모든 정보를 입력해주세요.");
-      0;
       return;
     }
 
@@ -90,15 +89,16 @@ export default function AuthPage() {
   };
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>{isLoginMode ? "로그인" : "회원가입"}</h1>
+    /* 중요: index.css에 정의한 클래스 이름으로 변경 */
+    <div className="auth-container">
+      <h1 className="auth-title">{isLoginMode ? "로그인" : "회원가입"}</h1>
 
       <form
-        className={styles.form}
+        className="auth-form"
         onSubmit={isLoginMode ? handleLogin : handleSignup}
       >
         <input
-          className={styles.input}
+          className="auth-input"
           type="text"
           placeholder="아이디"
           value={id}
@@ -107,7 +107,7 @@ export default function AuthPage() {
 
         {!isLoginMode && (
           <input
-            className={styles.input}
+            className="auth-input"
             type="text"
             placeholder="닉네임"
             value={nickname}
@@ -116,7 +116,7 @@ export default function AuthPage() {
         )}
 
         <input
-          className={styles.input}
+          className="auth-input"
           type="password"
           placeholder="비밀번호"
           value={pw}
@@ -126,7 +126,7 @@ export default function AuthPage() {
 
         {!isLoginMode && (
           <input
-            className={styles.input}
+            className="auth-input"
             type="password"
             placeholder="비밀번호 확인"
             value={pwCheck}
@@ -135,19 +135,20 @@ export default function AuthPage() {
           />
         )}
 
-        <button type="submit" className={styles.button}>
+        <button type="submit" className="auth-button">
           {isLoginMode ? "로그인" : "가입하기"}
         </button>
       </form>
 
-      <div className={styles.toggleContainer}>
+      <div className="auth-toggle-container">
         <span>
           {isLoginMode ? "계정이 없으신가요?" : "이미 계정이 있으신가요?"}
         </span>
         <button
           type="button"
-          className={styles.toggleLink}
+          className="auth-toggle-link"
           onClick={toggleMode}
+          style={{ marginLeft: "10px" }}
         >
           {isLoginMode ? "회원가입하기" : "로그인하기"}
         </button>

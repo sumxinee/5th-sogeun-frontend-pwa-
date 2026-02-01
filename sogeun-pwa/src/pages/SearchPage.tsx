@@ -7,6 +7,7 @@ import {
   useTransform,
   type PanInfo,
 } from "framer-motion";
+import '../index.css';
 
 // 1. 트랙 정보 인터페이스
 export interface Track {
@@ -27,7 +28,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Track[]>([]);
 
-  // 더미 데이터 (스크린샷용)
+  // 더미 데이터
   const [likedTracks, setLikedTracks] = useState<Track[]>([
     {
       trackId: 100,
@@ -43,6 +44,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const dragX = useMotionValue(0);
+  // 드래그 시 배경 투명도 조절 (검은색 대신 부드럽게 사라지도록)
   const dragOpacity = useTransform(dragX, [0, 200], [1, 0]);
 
   // 스와이프 뒤로가기
@@ -111,10 +113,12 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   // [UI 컴포넌트] 트랙 아이템
   // ------------------------------------------------------------------
   const TrackItem = ({ track }: { track: Track }) => (
-    <div className="flex items-center bg-[#1C1C1C] p-4 rounded-[30px] border border-white/5 mb-3">
+    <div className="flex items-center p-3 rounded-[24px] mb-3 backdrop-blur-md transition-colors
+                    bg-white/20 border border-white/30 shadow-sm hover:bg-white/30">
+      
       {/* 앨범 커버 */}
       <div
-        className="relative w-14 h-14 bg-[#2A2A2A] rounded-2xl mr-4 shrink-0 overflow-hidden cursor-pointer"
+        className="relative w-14 h-14 rounded-2xl mr-4 shrink-0 overflow-hidden cursor-pointer shadow-inner"
         onClick={() => togglePlay(track)}
       >
         <img
@@ -123,22 +127,19 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
           alt=""
         />
 
-        {/* ✅ [수정완료] 이퀄라이저 애니메이션 복구 (높이 변화) */}
+        {/* 이퀄라이저 애니메이션 */}
         {playingTrackId === track.trackId && (
-          <div className="absolute inset-0 bg-black/50 flex items-end justify-center pb-3 gap-1">
-            {/* 첫 번째 바 */}
+          <div className="absolute inset-0 bg-black/30 flex items-end justify-center pb-3 gap-1">
             <motion.div
               animate={{ height: [4, 12, 4] }}
               transition={{ repeat: Infinity, duration: 0.5 }}
               className="w-1 bg-white rounded-full"
             />
-            {/* 두 번째 바 */}
             <motion.div
               animate={{ height: [12, 4, 12] }}
               transition={{ repeat: Infinity, duration: 0.6 }}
               className="w-1 bg-white rounded-full"
             />
-            {/* 세 번째 바 */}
             <motion.div
               animate={{ height: [6, 14, 6] }}
               transition={{ repeat: Infinity, duration: 0.7 }}
@@ -150,22 +151,22 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
 
       {/* 텍스트 정보 */}
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p className="text-[16px] font-bold truncate leading-tight text-white mb-1">
+        <p className="text-[16px] font-bold truncate leading-tight text-white mb-1 drop-shadow-sm">
           {track.trackName}
         </p>
-        <p className="text-[13px] text-gray-400 truncate font-medium">
+        <p className="text-[13px] text-white/80 truncate font-medium">
           {track.artistName}
         </p>
       </div>
 
       {/* 액션 버튼 */}
-      <div className="flex items-center gap-4 pl-2">
+      <div className="flex items-center gap-3 pl-2">
         <button
           onClick={() => toggleLike(track)}
-          className="active:scale-110 transition-transform"
+          className="active:scale-110 transition-transform p-2 rounded-full hover:bg-white/10"
         >
           <svg
-            className={`w-5 h-5 ${likedTracks.some((t) => t.trackId === track.trackId) ? "fill-[#FF007F]" : "fill-gray-600"}`}
+            className={`w-6 h-6 ${likedTracks.some((t) => t.trackId === track.trackId) ? "fill-[#FF6B6B]" : "fill-white/60"}`}
             viewBox="0 0 24 24"
           >
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -173,7 +174,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
         </button>
         <button
           onClick={() => handleFinalSelect(track)}
-          className="px-5 py-2.5 bg-[#FF007F] text-white text-[13px] font-bold rounded-full shadow-md active:scale-95 transition-all"
+          className="px-4 py-2 bg-white text-[#FF6B6B] text-[13px] font-bold rounded-full shadow-lg active:scale-95 transition-all"
         >
           선택
         </button>
@@ -187,40 +188,44 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
       dragConstraints={{ left: 0, right: 400 }}
       onDragEnd={handleDragEnd}
       style={{ x: dragX, opacity: dragOpacity }}
-      className="absolute inset-0 z-50 flex flex-col w-full min-h-screen pt-14 bg-black"
+      className="absolute inset-0 z-50 flex flex-col w-full min-h-screen pt-14 bg-transparent backdrop-blur-sm"
     >
+      <div className="absolute inset-0 bg-black/10 -z-10" />
+
       <audio ref={audioRef} onEnded={() => setPlayingTrackId(null)} />
 
       {/* 상단 헤더 & 토글 */}
-      <div className="w-full flex flex-col items-center mb-8 px-6">
+      <div className="w-full flex flex-col items-center mb-4 px-6">
         <div className="w-full flex justify-between items-center mb-6">
           <button
             onClick={onBack}
-            className="bg-[#1C1C1C] p-3 rounded-full border border-white/10"
+            className="bg-white/20 p-3 rounded-full border border-white/30 backdrop-blur-md shadow-sm"
           >
-            <svg className="w-5 h-5 fill-gray-300" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
               <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
             </svg>
           </button>
 
-          <div className="bg-[#2C2C2C] p-1 rounded-full flex items-center w-[180px] h-[44px] relative">
+          {/* 탭 전환 버튼 */}
+          <div className="bg-black/20 p-1 rounded-full flex items-center w-[180px] h-[44px] relative backdrop-blur-md border border-white/10">
             <button
               onClick={() => setActiveTab("search")}
               className={`flex-1 h-full rounded-full text-[14px] font-bold z-10 transition-colors duration-200 
-                        ${activeTab === "search" ? "text-white" : "text-gray-500"}`}
+                        ${activeTab === "search" ? "text-white" : "text-white/60"}`}
             >
               검색
             </button>
             <button
               onClick={() => setActiveTab("likes")}
               className={`flex-1 h-full rounded-full text-[14px] font-bold z-10 transition-colors duration-200 
-                        ${activeTab === "likes" ? "text-white" : "text-gray-500"}`}
+                        ${activeTab === "likes" ? "text-white" : "text-white/60"}`}
             >
               좋아요
             </button>
 
+            {/* 탭 슬라이더 */}
             <motion.div
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#FF007F] rounded-full shadow-md z-0"
+              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#FF6B6B] rounded-full shadow-md z-0"
               animate={{
                 left: activeTab === "search" ? "4px" : "calc(50%)",
               }}
@@ -236,23 +241,23 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
         {activeTab === "search" ? (
           <motion.div
             key="s"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             className="flex-1 flex flex-col overflow-hidden px-6"
           >
             {/* 검색창 */}
-            <div className="flex items-center bg-[#1C1C1C] h-[52px] rounded-full px-5 border border-white/5 mb-6">
+            <div className="flex items-center bg-white/20 h-[52px] rounded-[20px] px-5 border border-white/40 mb-6 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
               <input
-                className="bg-transparent flex-1 outline-none font-bold text-white placeholder:text-gray-500 text-[15px]"
+                className="bg-transparent flex-1 outline-none font-bold text-white placeholder:text-white/60 text-[15px]"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="음악 검색..."
+                placeholder="어떤 노래를 찾으세요?"
               />
               <button
                 onClick={handleSearch}
-                className="text-white font-bold text-[14px] hover:text-[#FF007F] transition-colors"
+                className="text-white font-bold text-[14px] hover:text-[#FF6B6B] transition-colors"
               >
                 검색
               </button>
@@ -262,7 +267,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
               {results.length > 0 ? (
                 results.map((t) => <TrackItem key={t.trackId} track={t} />)
               ) : (
-                <div className="text-center mt-20 text-gray-600 text-sm">
+                <div className="text-center mt-20 text-white/60 text-sm">
                   검색 결과가 여기에 표시됩니다.
                 </div>
               )}
@@ -271,16 +276,16 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
         ) : (
           <motion.div
             key="l"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             className="flex-1 px-6 overflow-y-auto space-y-2 pb-24"
           >
-            <h2 className="text-[20px] font-bold mb-5 text-white">찜한 목록</h2>
+            <h2 className="text-[20px] font-bold mb-5 text-white drop-shadow-md">찜한 목록</h2>
             {likedTracks.length > 0 ? (
               likedTracks.map((t) => <TrackItem key={t.trackId} track={t} />)
             ) : (
-              <div className="text-center pt-20 text-gray-600 font-bold">
+              <div className="text-center pt-20 text-white/60 font-bold">
                 아직 찜한 음악이 없어요.
               </div>
             )}
