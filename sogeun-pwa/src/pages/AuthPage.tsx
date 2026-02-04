@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import '../index.css'; // 전역 CSS 불러오기
+import "../index.css"; // 전역 CSS 불러오기
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -44,9 +44,20 @@ export default function AuthPage() {
         loginId: id,
         password: pw,
       });
-      
+
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
+        // (서버 응답 형태에 따라 response.data.accessToken 또는 response.data.token 일 수 있음)
+        if (response.data.accessToken) {
+          localStorage.setItem("accessToken", response.data.accessToken);
+
+          // [확인용] 저장된 토큰을 바로 다시 꺼내서 콘솔에 찍어봅니다.
+          const savedToken = localStorage.getItem("accessToken");
+          console.log("--------------------------------------------------");
+          console.log("로컬스토리지 저장 확인 완료");
+          console.log("현재 토큰값:", savedToken);
+          console.log("--------------------------------------------------");
+        }
         alert("소근에 오신 것을 환영해요!");
         // 로그인 성공 시 GPS 화면으로 이동
         navigate("/gps", { state: { userId: id } });

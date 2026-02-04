@@ -13,7 +13,9 @@ export default defineConfig({
         short_name: "소근",
         description: "음악으로 소통하는 소셜 앱",
         theme_color: "#ffffff",
-        icons: [
+        start_url: "/",
+        display: "standalone",
+        /*icons: [
           {
             src: "pwa-192x192.png",
             sizes: "192x192",
@@ -24,7 +26,7 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
           },
-        ],
+        ],*/
       },
     }),
   ],
