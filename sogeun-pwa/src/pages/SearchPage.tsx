@@ -7,7 +7,7 @@ import {
   useTransform,
   type PanInfo,
 } from "framer-motion";
-import '../index.css';
+import "../index.css";
 
 // 1. 트랙 정보 인터페이스
 export interface Track {
@@ -28,17 +28,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Track[]>([]);
 
-  // 더미 데이터
-  const [likedTracks, setLikedTracks] = useState<Track[]>([
-    {
-      trackId: 100,
-      trackName: "Ditto",
-      artistName: "뉴진스",
-      artworkUrl100:
-        "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/3d/82/da/3d82da7f-ec44-6a97-3914-6fa3fb63d274/196922466030_Cover.jpg/600x600bb.jpg",
-      previewUrl: "",
-    },
-  ]);
+  const [likedTracks, setLikedTracks] = useState<Track[]>([]);
 
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -113,9 +103,10 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   // [UI 컴포넌트] 트랙 아이템
   // ------------------------------------------------------------------
   const TrackItem = ({ track }: { track: Track }) => (
-    <div className="flex items-center p-3 rounded-[24px] mb-3 backdrop-blur-md transition-colors
-                    bg-white/20 border border-white/30 shadow-sm hover:bg-white/30">
-      
+    <div
+      className="flex items-center p-3 rounded-[24px] mb-3 backdrop-blur-md transition-colors
+                    bg-white/20 border border-white/30 shadow-sm hover:bg-white/30"
+    >
       {/* 앨범 커버 */}
       <div
         className="relative w-14 h-14 rounded-2xl mr-4 shrink-0 overflow-hidden cursor-pointer shadow-inner"
@@ -281,7 +272,9 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
             exit={{ opacity: 0, y: -10 }}
             className="flex-1 px-6 overflow-y-auto space-y-2 pb-24"
           >
-            <h2 className="text-[20px] font-bold mb-5 text-white drop-shadow-md">찜한 목록</h2>
+            <h2 className="text-[20px] font-bold mb-5 text-white drop-shadow-md">
+              찜한 목록
+            </h2>
             {likedTracks.length > 0 ? (
               likedTracks.map((t) => <TrackItem key={t.trackId} track={t} />)
             ) : (
