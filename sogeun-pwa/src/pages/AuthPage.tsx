@@ -16,26 +16,31 @@ export default function AuthPage() {
   const [pwCheck, setPwCheck] = useState("");
   const [nickname, setNickname] = useState("");
 
+  // 에러 메시지 상태 관리 (와이어프레임의 빨간 글씨 구현용)
+  const [errorMessage, setErrorMessage] = useState("");
+
   // Vercel 환경 변수에서 가져오는 API 주소
   const API_URL =
     import.meta.env.VITE_API_URL ||
     "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
 
-  // 모드 전환 시 입력값 초기화
+  // 모드 전환 시 입력값 및 에러 초기화
   const toggleMode = () => {
     setIsLoginMode(!isLoginMode);
     setId("");
     setPw("");
     setPwCheck("");
     setNickname("");
+    setErrorMessage(""); // 에러 메시지 초기화
   };
 
   // 로그인 로직
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(""); // 기존 에러 초기화
 
     if (!id || !pw) {
-      alert("아이디와 비밀번호를 입력해주세요.");
+      setErrorMessage("아이디와 비밀번호를 입력해주세요.");
       return;
     }
 
@@ -47,38 +52,31 @@ export default function AuthPage() {
 
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
-        // (서버 응답 형태에 따라 response.data.accessToken 또는 response.data.token 일 수 있음)
         if (response.data.accessToken) {
           localStorage.setItem("accessToken", response.data.accessToken);
-
-          // [확인용] 저장된 토큰을 바로 다시 꺼내서 콘솔에 찍어봅니다.
-          const savedToken = localStorage.getItem("accessToken");
-          console.log("--------------------------------------------------");
-          console.log("로컬스토리지 저장 확인 완료");
-          console.log("현재 토큰값:", savedToken);
-          console.log("--------------------------------------------------");
         }
         alert("소근에 오신 것을 환영해요!");
-        // 로그인 성공 시 GPS 화면으로 이동
         navigate("/gps", { state: { userId: id } });
       }
     } catch (error: any) {
       console.error("로그인 에러:", error);
-      alert("로그인 실패! 아이디 또는 비밀번호를 확인해주세요.");
+      // 와이어프레임처럼 인풋 밑에 빨간 글씨로 띄우기 위해 상태 업데이트
+      setErrorMessage("아이디 또는 비밀번호가 일치하지 않습니다.");
     }
   };
 
   // 회원가입 로직
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
 
     if (!id || !pw || !pwCheck || !nickname) {
-      alert("모든 정보를 입력해주세요.");
+      setErrorMessage("모든 정보를 입력해주세요.");
       return;
     }
 
     if (pw !== pwCheck) {
-      alert("비밀번호가 일치하지 않습니다.");
+      setErrorMessage("비밀번호가 일치하지 않습니다.");
       return;
     }
 
@@ -95,14 +93,21 @@ export default function AuthPage() {
       }
     } catch (error: any) {
       console.error("회원가입 에러:", error);
-      alert("회원가입에 실패했습니다.");
+      setErrorMessage("이미 사용 중인 아이디거나 오류가 발생했습니다.");
     }
   };
 
   return (
-    /* 중요: index.css에 정의한 클래스 이름으로 변경 */
     <div className="auth-container">
-      <h1 className="auth-title">{isLoginMode ? "로그인" : "회원가입"}</h1>
+      {/* 1. 상단 로고 및 텍스트 영역 (와이어프레임 디자인 반영) */}
+      <div className="auth-header">
+        <p className="auth-sub-text">Hello SOGEUNian !</p>
+        {/* 아이콘이 있다면 <img> 태그로 교체 가능, 현재는 텍스트 아이콘 */}
+        <div className="auth-logo-icon" style={{ fontSize: "40px" }}>
+          🎧
+        </div>
+        <h1 className="auth-title">{isLoginMode ? "로그인" : "회원가입"}</h1>
+      </div>
 
       <form
         className="auth-form"
@@ -127,7 +132,7 @@ export default function AuthPage() {
         )}
 
         <input
-          className="auth-input"
+          className={`auth-input ${errorMessage ? "error" : ""}`}
           type="password"
           placeholder="비밀번호"
           value={pw}
@@ -137,7 +142,9 @@ export default function AuthPage() {
 
         {!isLoginMode && (
           <input
-            className="auth-input"
+            className={`auth-input ${
+              !isLoginMode && pw !== pwCheck && pwCheck ? "error" : ""
+            }`}
             type="password"
             placeholder="비밀번호 확인"
             value={pwCheck}
@@ -146,11 +153,15 @@ export default function AuthPage() {
           />
         )}
 
+        {/* 2. 에러 메시지 표시 영역 (빨간 글씨) */}
+        {errorMessage && <p className="auth-error-msg">⚠ {errorMessage}</p>}
+
         <button type="submit" className="auth-button">
           {isLoginMode ? "로그인" : "가입하기"}
         </button>
       </form>
 
+      {/* 3. 하단 링크 (CSS flex 정렬을 위해 불필요한 스타일 제거) */}
       <div className="auth-toggle-container">
         <span>
           {isLoginMode ? "계정이 없으신가요?" : "이미 계정이 있으신가요?"}
@@ -159,7 +170,6 @@ export default function AuthPage() {
           type="button"
           className="auth-toggle-link"
           onClick={toggleMode}
-          style={{ marginLeft: "10px" }}
         >
           {isLoginMode ? "회원가입하기" : "로그인하기"}
         </button>

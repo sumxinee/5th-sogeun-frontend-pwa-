@@ -7,6 +7,10 @@
   /* 🎨 소근(Sogun) 포인트 컬러 */
   --sogun-cyan: #00F0FF; /* 레이더의 밝은 민트/하늘색 */
   --sogun-pink: #FF9E9E;
+
+  --sogun-purple: #A3A3E9; 
+  
+  --sogun-error: #FF4D4D;
   
   /* ✍️ 텍스트 컬러 */
   --text-white: #FFFFFF;
@@ -52,7 +56,7 @@ button {
 }
 
 /* =========================================
-   1. 로그인 / 회원가입 페이지
+   1. 로그인 / 회원가입 / 스플래시 페이지
    ========================================= */
 .auth-container {
   display: flex;
@@ -62,22 +66,48 @@ button {
   min-height: 100vh;
   width: 100%;
   padding: 20px;
+  text-align: center;
+}
+
+/* 상단 로고 및 텍스트 영역 */
+.auth-header {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-sub-text {
+  font-size: 14px;
+  color: var(--text-sub);
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.auth-logo-icon {
+  width: 60px; /* 아이콘 크기 예시 */
+  height: 60px;
+  margin-bottom: 10px;
+  /* 실제 이미지가 들어오면 background나 img 태그로 대체됨 */
 }
 
 .auth-title {
   font-size: 28px;
-  font-weight: 800;
-  color: white;
+  font-weight: 700;
+  color: #54687A;
   margin-bottom: 30px;
-  text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin: 10px;
+  text-shadow: none;
 }
 
 .auth-form {
+  margin-top: 0;
   width: 100%;
   max-width: 320px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .auth-input {
@@ -86,43 +116,124 @@ button {
   padding: 0 20px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.3);
-  color: white;
+  background: rgba(255, 255, 255, 0.6);
+  color: #333333;
   font-size: 15px;
   outline: none;
   backdrop-filter: blur(5px);
 }
 
 .auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+  color: #666666;
 }
 
 .auth-input:focus {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.4);
   border-color: white;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* 에러 상태일 때 스타일 (빨간 테두리) */
+.auth-input.error {
+  border-color: var(--sogun-error);
+  background: rgba(255, 77, 77, 0.1);
+}
+
+/* 에러 메시지 텍스트 */
+.auth-error-msg {
+  color: var(--sogun-error);
+  font-size: 12px;
+  text-align: left;
+  margin-left: 10px;
+  margin-top: -5px; /* 인풋이랑 가깝게 */
+  font-weight: 600;
 }
 
 .auth-button {
   height: 50px;
   border-radius: 25px;
-  background: white;
-  color: #EAA6D8;
-  font-weight: 800;
+  background: var(--sogun-purple);
+  color: white;
+  font-weight: 700;
   font-size: 16px;
   border: none;
-  margin-top: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(100, 100, 255, 0.2);
   cursor: pointer;
+  transition: transform 0.1s;
 }
 
+.auth-button:active {
+  transform: scale(0.98);
+}
+
+/* 1. 전체를 감싸는 틀 (정렬 담당) */
+.auth-toggle-container {
+  margin-top: 25px;
+  width: 100%;
+  
+  display: flex;             /* 플렉스 박스 선언 */
+  flex-direction: row;       /* 가로로 배치 */
+  justify-content: center;   /* 화면 정중앙 */
+  align-items: center;       /* 수직 중앙 */
+  gap: 10px;
+}
+
+/* 2. 질문 텍스트 (회색: #858588) */
+.auth-toggle-container span {
+  color: #858588;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* 3. 버튼 (흰색: #FFFFFF + 밑줄) */
 .auth-toggle-link {
-  margin-top: 20px;
-  color: white;
-  text-decoration: underline;
-  font-weight: bold;
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0; /* 불필요한 여백 제거 */
+  
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* =========================================
+   스플래시 / 로딩 화면 스타일
+   ========================================= */
+.splash-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.splash-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  animation: bounce 2s infinite;
+}
+
+.splash-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.splash-sub {
+  font-size: 14px;
+  color: var(--text-sub);
+  font-weight: 400;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* =========================================
