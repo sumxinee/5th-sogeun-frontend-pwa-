@@ -337,19 +337,25 @@ const GPS: React.FC<GPSProps> = ({
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);*/
+  const BASE_URL =
+    "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+  const userId = 1; // 테스트용 아이디
+
+  // ------------------- [기능 1: 실시간 주변 유저 수신 (Nearby - SSE)] -------------------
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
 
-    // 1. 토큰이나 위치 정보가 없으면 아예 실행 안 하도록 '가드' 설치
-    if (!token || !myLocation) {
-      console.log("SSE 대기 중: 토큰이나 위치 정보가 없습니다.");
+    // TypeScript null 체크 가드
+    if (
+      !token ||
+      !myLocation ||
+      myLocation.lat === undefined ||
+      myLocation.lng === undefined
+    ) {
       return;
     }
-    const BASE_URL =
-      "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-    // 질문하신 그 주소 그대로 유지됩니다.
-    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=1&lat=${myLocation.lat}&lon=${myLocation.lng}`;
 
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${userId}&lat=${myLocation.lat}&lon=${myLocation.lng}`;
     const ctrl = new AbortController();
 
     const connectSSE = async () => {
@@ -362,36 +368,70 @@ const GPS: React.FC<GPSProps> = ({
           },
           signal: ctrl.signal,
           async onopen(res) {
-            if (res.ok) {
-              console.log("SSE 연결 성공!");
-            } else {
-              console.error("SSE 연결 실패 상태코드:", res.status);
-            }
+            if (res.ok) console.log("🚀 SSE 연결 성공!");
+            else console.error("SSE 연결 실패:", res.status);
           },
           onmessage(event) {
-            if (event.data) {
+            if (event.data && event.data !== "heartbeat") {
               try {
                 const parsedData = JSON.parse(event.data);
                 setServerUsers(parsedData);
               } catch (e) {
-                console.error("데이터 파싱 오류:", e);
+                console.error("데이터 파싱 실패:", e);
               }
             }
           },
           onerror(err) {
-            console.error("SSE 연결 에러 발생:", err);
-            throw err; // 재연결 방지하려면 throw 하지 않음
+            console.error("SSE 에러:", err);
+            ctrl.abort();
           },
         });
       } catch (err) {
-        console.log("SSE 중단 또는 에러:", err);
+        if (!ctrl.signal.aborted) console.log("SSE 중단");
       }
     };
 
     connectSSE();
+    return () => ctrl.abort();
+  }, [myLocation?.lat, myLocation?.lng]); // 위치가 바뀔 때마다 주변 정보 다시 구독
 
-    return () => ctrl.abort(); // 정리(Clean-up)
-  }, [myLocation?.lat, myLocation?.lng]);
+  // ------------------- [기능 2: 내 위치 서버에 전송 (Update - POST)] -------------------
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setMyLocation({ lat: latitude, lng: longitude });
+
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        // 소수점 6자리로 고정하여 서버 부담을 줄이고 정확도 유지
+        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
+
+        fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+          .then(async (res) => {
+            if (res.ok) console.log("📍 위치 업데이트 성공!");
+            else {
+              const txt = await res.text();
+              console.error(`업데이트 실패 (${res.status}):`, txt);
+            }
+          })
+          .catch((err) => console.error("네트워크 에러:", err));
+      },
+      (error) => console.error("위치 추적 오류:", error),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   // ------------------- [Logic: 유저 위치 계산 및 렌더링 업데이트] -------------------
   // 내 위치나 서버 유저 데이터가 바뀔 때마다 레이더 상의 위치(angle, radius)를 다시 계산
