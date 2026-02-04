@@ -4,7 +4,7 @@ import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import type { Track } from "./SearchPage";
 import { EventSourcePolyfill } from "event-source-polyfill";
-
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 /* // SearchPage에서 Track 타입을 못 가져올 경우 주석 해제
 export interface Track {
   trackId: number;
@@ -242,28 +242,35 @@ const GPS: React.FC<GPSProps> = ({
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
   // ------------------- [API 1: SSE 연결 (데이터 수신)] -------------------
-  useEffect(() => {
+  /*useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    console.log("SSE 시도 중 - 토큰 상태:", token);
-    // 1. 토큰이 없거나 문자열 "null", "undefined"일 경우 실행 중단
+    console.log("1. SSE useEffect 진입 완료. 토큰:", token);
+
     if (!token || token === "null" || token === "undefined") {
-      console.log("SSE: No valid token found, waiting...");
+      console.log("2. 토큰이 없어서 종료합니다.");
       return;
     }
-
-    if (!myLocation) return;
+    console.log("3. 현재 위치 상태:", myLocation);
+    if (!myLocation) {
+      console.log("4. 위치 정보가 아직 없어서 기다립니다.");
+      return;
+    }
 
     const BASE_URL =
       "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
     const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=1&lat=${myLocation.lat}&lon=${myLocation.lng}`;
 
+    console.log("실제 전송 URL:", sseEndpoint);
+
     const eventSource = new EventSourcePolyfill(sseEndpoint, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      withCredentials: true,
       heartbeatTimeout: 60 * 60 * 1000,
     });
-
+    console.log("실제 토큰 값:", token);
+    console.log("전송 URL 확인:", sseEndpoint);
     eventSource.onopen = () => console.log("SSE Connected!");
 
     eventSource.onmessage = (event) => {
@@ -329,7 +336,62 @@ const GPS: React.FC<GPSProps> = ({
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+  }, []);*/
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+
+    // 1. 토큰이나 위치 정보가 없으면 아예 실행 안 하도록 '가드' 설치
+    if (!token || !myLocation) {
+      console.log("SSE 대기 중: 토큰이나 위치 정보가 없습니다.");
+      return;
+    }
+    const BASE_URL =
+      "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+    // 질문하신 그 주소 그대로 유지됩니다.
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=1&lat=${myLocation.lat}&lon=${myLocation.lng}`;
+
+    const ctrl = new AbortController();
+
+    const connectSSE = async () => {
+      try {
+        await fetchEventSource(sseEndpoint, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+          },
+          signal: ctrl.signal,
+          async onopen(res) {
+            if (res.ok) {
+              console.log("SSE 연결 성공!");
+            } else {
+              console.error("SSE 연결 실패 상태코드:", res.status);
+            }
+          },
+          onmessage(event) {
+            if (event.data) {
+              try {
+                const parsedData = JSON.parse(event.data);
+                setServerUsers(parsedData);
+              } catch (e) {
+                console.error("데이터 파싱 오류:", e);
+              }
+            }
+          },
+          onerror(err) {
+            console.error("SSE 연결 에러 발생:", err);
+            throw err; // 재연결 방지하려면 throw 하지 않음
+          },
+        });
+      } catch (err) {
+        console.log("SSE 중단 또는 에러:", err);
+      }
+    };
+
+    connectSSE();
+
+    return () => ctrl.abort(); // 정리(Clean-up)
+  }, [myLocation?.lat, myLocation?.lng]);
 
   // ------------------- [Logic: 유저 위치 계산 및 렌더링 업데이트] -------------------
   // 내 위치나 서버 유저 데이터가 바뀔 때마다 레이더 상의 위치(angle, radius)를 다시 계산
