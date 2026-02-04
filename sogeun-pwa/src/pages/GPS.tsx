@@ -286,13 +286,12 @@ const GPS: React.FC<GPSProps> = ({
   }, [localStorage.getItem("accessToken")]); // 2. 토큰 값이 변경될 때마다 다시 시도하도록 설정 // 의존성 배열에 필요시 token을 추가할 수 있습니다.
 
   // ------------------- [API 2: 내 위치 추적 및 서버 전송] -------------------
-  // ------------------- [API 2: 내 위치 추적 및 서버 전송] -------------------
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
 
     const BASE_URL =
       "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-    const userId = 2; // SSE와 동일하게 유지하세요.
+    const userId = 1; // SSE와 동일하게 유지하세요.
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -318,8 +317,7 @@ const GPS: React.FC<GPSProps> = ({
           .then(async (res) => {
             if (!res.ok) {
               const errorText = await res.text();
-              console.log("에러 상태 코드:", res.status);
-              console.log("서버가 보낸 상세 에러:", errorText);
+              console.error(`업데이트 실패 (${res.status}):`, errorText);
             } else {
               console.log("위치 업데이트 성공!");
             }
