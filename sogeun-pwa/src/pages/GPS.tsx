@@ -244,7 +244,7 @@ const GPS: React.FC<GPSProps> = ({
   // ------------------- [API 1: SSE 연결 (데이터 수신)] -------------------
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-
+    console.log("SSE 시도 중 - 토큰 상태:", token);
     // 1. 토큰이 없거나 문자열 "null", "undefined"일 경우 실행 중단
     if (!token || token === "null" || token === "undefined") {
       console.log("SSE: No valid token found, waiting...");
@@ -286,31 +286,37 @@ const GPS: React.FC<GPSProps> = ({
   }, [localStorage.getItem("accessToken")]); // 2. 토큰 값이 변경될 때마다 다시 시도하도록 설정 // 의존성 배열에 필요시 token을 추가할 수 있습니다.
 
   // ------------------- [API 2: 내 위치 추적 및 서버 전송] -------------------
+  // ------------------- [API 2: 내 위치 추적 및 서버 전송] -------------------
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
 
     const BASE_URL =
       "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-    const token = localStorage.getItem("accessToken");
-    const userId = 1; // 실제 서비스 시에는 로그인 정보나 토큰에서 추출한 ID를 사용하세요.
+    const userId = 2; // SSE와 동일하게 유지하세요.
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setMyLocation({ lat: latitude, lng: longitude });
 
-        // [핵심 변경] URL 뒤에 쿼리 스트링을 직접 붙여서 전송합니다.
+        // [핵심 수정] 위치가 바뀔 때마다 최신 토큰을 새로 가져옵니다.
+        const token = localStorage.getItem("accessToken");
+
+        // 토큰이 잘 가져와지는지 확인하기 위한 로그 (배포 후 확인용)
+        console.log("현재 전송 시도 토큰:", token);
+
+        // URL 파라미터 방식 유지 (Body는 비웁니다)
         const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude}&lon=${longitude}`;
 
         fetch(url, {
-          method: "POST", // body 없이 URL 파라미터로만 데이터 전송
+          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         })
           .then(async (res) => {
             if (!res.ok) {
-              // 서버가 403을 보낼 때 '왜' 안되는지 메시지를 같이 보낼 수도 있습니다.
               const errorText = await res.text();
               console.log("에러 상태 코드:", res.status);
               console.log("서버가 보낸 상세 에러:", errorText);
@@ -318,14 +324,14 @@ const GPS: React.FC<GPSProps> = ({
               console.log("위치 업데이트 성공!");
             }
           })
-          .catch((err) => console.error("위치 전송 실패:", err));
+          .catch((err) => console.error("위치 전송 네트워크 실패:", err));
       },
       (error) => console.error("위치 추적 오류:", error),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []); // 의존성 배열을 비워두거나 필요시 token 추가
+  }, []);
 
   // ------------------- [Logic: 유저 위치 계산 및 렌더링 업데이트] -------------------
   // 내 위치나 서버 유저 데이터가 바뀔 때마다 레이더 상의 위치(angle, radius)를 다시 계산
