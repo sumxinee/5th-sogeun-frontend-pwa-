@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import type { Track } from "./SearchPage";
+import { EventSourcePolyfill } from "event-source-polyfill";
 
 /* // SearchPage에서 Track 타입을 못 가져올 경우 주석 해제
 export interface Track {
@@ -242,35 +243,39 @@ const GPS: React.FC<GPSProps> = ({
 
   // ------------------- [API 1: SSE 연결 (데이터 수신)] -------------------
   useEffect(() => {
-    const token = localStorage.getItem("accessToken"); // 1. 토큰 꺼내기
+    const token = localStorage.getItem("accessToken");
+
+    // 1. 토큰이 없거나 문자열 "null", "undefined"일 경우 실행 중단
+    if (!token || token === "null" || token === "undefined") {
+      console.log("SSE: No valid token found, waiting...");
+      return;
+    }
+
+    if (!myLocation) return;
+
     const BASE_URL =
       "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=1&lat=${myLocation.lat}&lon=${myLocation.lng}`;
 
-    // 토큰이 있으면 "?token=..."을 붙이고, 없으면 그냥 원본 주소 사용
-    const sseEndpoint = token
-      ? `${BASE_URL}/sse/location/nearby?token=${token}`
-      : `${BASE_URL}/sse/location/nearby`;
+    const eventSource = new EventSourcePolyfill(sseEndpoint, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      heartbeatTimeout: 60 * 60 * 1000,
+    });
 
-    const eventSource = new EventSource(sseEndpoint);
+    eventSource.onopen = () => console.log("SSE Connected!");
 
-    // 연결 성공 시
-    eventSource.onopen = () => {
-      console.log("SSE Connected!", sseEndpoint);
-    };
-
-    // 메시지 수신 시
     eventSource.onmessage = (event) => {
       try {
-        const parsedData: ServerUserData[] = JSON.parse(event.data);
+        const parsedData = JSON.parse(event.data);
         setServerUsers(parsedData);
       } catch (error) {
         console.error("SSE Data Parse Error:", error);
       }
     };
 
-    // 에러 발생 시
     eventSource.onerror = (error) => {
-      // 토큰 만료 등으로 401 에러가 날 경우 여기서 처리 가능
       console.error("SSE Error:", error);
       eventSource.close();
     };
@@ -278,7 +283,7 @@ const GPS: React.FC<GPSProps> = ({
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [localStorage.getItem("accessToken")]); // 2. 토큰 값이 변경될 때마다 다시 시도하도록 설정 // 의존성 배열에 필요시 token을 추가할 수 있습니다.
 
   // ------------------- [API 2: 내 위치 추적 및 서버 전송] -------------------
   useEffect(() => {
@@ -286,26 +291,32 @@ const GPS: React.FC<GPSProps> = ({
 
     const BASE_URL =
       "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-    const token = localStorage.getItem("accessToken"); // 저장소에서 토큰 미리 가져오기
+    const token = localStorage.getItem("accessToken");
+    const userId = 1; // 실제 서비스 시에는 로그인 정보나 토큰에서 추출한 ID를 사용하세요.
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setMyLocation({ lat: latitude, lng: longitude });
 
-        // 서버에 내 위치 전송
-        fetch(`${BASE_URL}/sse/location/update`, {
-          method: "POST",
+        // [핵심 변경] URL 뒤에 쿼리 스트링을 직접 붙여서 전송합니다.
+        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude}&lon=${longitude}`;
+
+        fetch(url, {
+          method: "POST", // body 없이 URL 파라미터로만 데이터 전송
           headers: {
-            "Content-Type": "application/json",
-            // 토큰이 있을 때만 Authorization 헤더를 추가
-            ...(token && { Authorization: `${token}` }),
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ latitude, longitude }),
         })
-          .then((res) => {
-            if (!res.ok)
-              console.log("위치 업데이트 실패 (상태코드):", res.status);
+          .then(async (res) => {
+            if (!res.ok) {
+              // 서버가 403을 보낼 때 '왜' 안되는지 메시지를 같이 보낼 수도 있습니다.
+              const errorText = await res.text();
+              console.log("에러 상태 코드:", res.status);
+              console.log("서버가 보낸 상세 에러:", errorText);
+            } else {
+              console.log("위치 업데이트 성공!");
+            }
           })
           .catch((err) => console.error("위치 전송 실패:", err));
       },
