@@ -299,7 +299,7 @@ const GPS: React.FC<GPSProps> = ({
           headers: {
             "Content-Type": "application/json",
             // 토큰이 있을 때만 Authorization 헤더를 추가
-            ...(token && { Authorization: `Bearer ${token}` }),
+            ...(token && { Authorization: `${token}` }),
           },
           body: JSON.stringify({ latitude, longitude }),
         })
