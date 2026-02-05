@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import type { Track } from "./SearchPage";
-
+//import { EventSourcePolyfill } from "event-source-polyfill";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 /* // SearchPage에서 Track 타입을 못 가져올 경우 주석 해제
 export interface Track {
   trackId: number;
@@ -241,36 +242,47 @@ const GPS: React.FC<GPSProps> = ({
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
   // ------------------- [API 1: SSE 연결 (데이터 수신)] -------------------
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken"); // 1. 토큰 꺼내기
+  /*useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    console.log("1. SSE useEffect 진입 완료. 토큰:", token);
+
+    if (!token || token === "null" || token === "undefined") {
+      console.log("2. 토큰이 없어서 종료합니다.");
+      return;
+    }
+    console.log("3. 현재 위치 상태:", myLocation);
+    if (!myLocation) {
+      console.log("4. 위치 정보가 아직 없어서 기다립니다.");
+      return;
+    }
+
     const BASE_URL =
       "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=1&lat=${myLocation.lat}&lon=${myLocation.lng}`;
 
-    // 토큰이 있으면 "?token=..."을 붙이고, 없으면 그냥 원본 주소 사용
-    const sseEndpoint = token
-      ? `${BASE_URL}/sse/location/nearby?token=${token}`
-      : `${BASE_URL}/sse/location/nearby`;
+    console.log("실제 전송 URL:", sseEndpoint);
 
-    const eventSource = new EventSource(sseEndpoint);
+    const eventSource = new EventSourcePolyfill(sseEndpoint, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      withCredentials: true,
+      heartbeatTimeout: 60 * 60 * 1000,
+    });
+    console.log("실제 토큰 값:", token);
+    console.log("전송 URL 확인:", sseEndpoint);
+    eventSource.onopen = () => console.log("SSE Connected!");
 
-    // 연결 성공 시
-    eventSource.onopen = () => {
-      console.log("SSE Connected!", sseEndpoint);
-    };
-
-    // 메시지 수신 시
     eventSource.onmessage = (event) => {
       try {
-        const parsedData: ServerUserData[] = JSON.parse(event.data);
+        const parsedData = JSON.parse(event.data);
         setServerUsers(parsedData);
       } catch (error) {
         console.error("SSE Data Parse Error:", error);
       }
     };
 
-    // 에러 발생 시
     eventSource.onerror = (error) => {
-      // 토큰 만료 등으로 401 에러가 날 경우 여기서 처리 가능
       console.error("SSE Error:", error);
       eventSource.close();
     };
@@ -278,7 +290,7 @@ const GPS: React.FC<GPSProps> = ({
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [localStorage.getItem("accessToken")]); // 2. 토큰 값이 변경될 때마다 다시 시도하도록 설정 // 의존성 배열에 필요시 token을 추가할 수 있습니다.
 
   // ------------------- [API 2: 내 위치 추적 및 서버 전송] -------------------
   useEffect(() => {
@@ -286,35 +298,143 @@ const GPS: React.FC<GPSProps> = ({
 
     const BASE_URL =
       "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-    const token = localStorage.getItem("accessToken"); // 저장소에서 토큰 미리 가져오기
+    const userId = 1; // SSE와 동일하게 유지하세요.
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setMyLocation({ lat: latitude, lng: longitude });
 
-        // 서버에 내 위치 전송
-        fetch(`${BASE_URL}/sse/location/update`, {
+        // [핵심 수정] 위치가 바뀔 때마다 최신 토큰을 새로 가져옵니다.
+        const token = localStorage.getItem("accessToken");
+
+        // 토큰이 잘 가져와지는지 확인하기 위한 로그 (배포 후 확인용)
+        console.log("현재 전송 시도 토큰:", token);
+
+        // URL 파라미터 방식 유지 (Body는 비웁니다)
+        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude}&lon=${longitude}`;
+
+        fetch(url, {
           method: "POST",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
-            // 토큰이 있을 때만 Authorization 헤더를 추가
-            ...(token && { Authorization: `Bearer ${token}` }),
           },
-          body: JSON.stringify({ latitude, longitude }),
         })
-          .then((res) => {
-            if (!res.ok)
-              console.log("위치 업데이트 실패 (상태코드):", res.status);
+          .then(async (res) => {
+            if (!res.ok) {
+              const errorText = await res.text();
+              console.error(`업데이트 실패 (${res.status}):`, errorText);
+            } else {
+              console.log("위치 업데이트 성공!");
+            }
           })
-          .catch((err) => console.error("위치 전송 실패:", err));
+          .catch((err) => console.error("위치 전송 네트워크 실패:", err));
       },
       (error) => console.error("위치 추적 오류:", error),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []); // 의존성 배열을 비워두거나 필요시 token 추가
+  }, []);*/
+  const BASE_URL =
+    "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+  const userId = 1; // 테스트용 아이디
+
+  // ------------------- [기능 1: 실시간 주변 유저 수신 (Nearby - SSE)] -------------------
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+
+    // TypeScript null 체크 가드
+    if (
+      !token ||
+      !myLocation ||
+      myLocation.lat === undefined ||
+      myLocation.lng === undefined
+    ) {
+      return;
+    }
+
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${userId}&lat=${myLocation.lat}&lon=${myLocation.lng}`;
+    const ctrl = new AbortController();
+
+    const connectSSE = async () => {
+      try {
+        await fetchEventSource(sseEndpoint, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+            "Cache-Control": "no-cache",
+          },
+          signal: ctrl.signal,
+          async onopen(res) {
+            if (res.ok) console.log("🚀 SSE 연결 성공!");
+            else console.error("SSE 연결 실패:", res.status);
+          },
+          onmessage(event) {
+            if (event.data && event.data !== "heartbeat") {
+              try {
+                const parsedData = JSON.parse(event.data);
+                setServerUsers(parsedData);
+              } catch (e) {
+                console.error("데이터 파싱 실패:", e);
+              }
+            }
+          },
+          onerror(err) {
+            console.error("SSE 에러:", err);
+            ctrl.abort();
+          },
+        });
+      } catch (err) {
+        if (!ctrl.signal.aborted) console.log("SSE 중단");
+      }
+    };
+
+    connectSSE();
+    return () => ctrl.abort();
+  }, [myLocation?.lat, myLocation?.lng]); // 위치가 바뀔 때마다 주변 정보 다시 구독
+
+  // ------------------- [기능 2: 내 위치 서버에 전송 (Update - POST)] -------------------
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setMyLocation({ lat: latitude, lng: longitude });
+
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        // 소수점 6자리로 고정하여 서버 부담을 줄이고 정확도 유지
+        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
+
+        fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json",
+          },
+        })
+          .then(async (res) => {
+            if (res.ok) console.log("📍 위치 업데이트 성공!");
+            else {
+              const txt = await res.text();
+              console.error(`업데이트 실패 (${res.status}):`, txt);
+            }
+          })
+          .catch((err) => console.error("네트워크 에러:", err));
+      },
+      (error) => console.error("위치 추적 오류:", error),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   // ------------------- [Logic: 유저 위치 계산 및 렌더링 업데이트] -------------------
   // 내 위치나 서버 유저 데이터가 바뀔 때마다 레이더 상의 위치(angle, radius)를 다시 계산

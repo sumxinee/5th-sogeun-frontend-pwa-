@@ -24,10 +24,9 @@ interface SearchPageProps {
 }
 
 const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
-  const [activeTab, setActiveTab] = useState<"search" | "likes">("likes");
+  const [activeTab, setActiveTab] = useState<"search" | "likes">("search");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Track[]>([]);
-
   const [likedTracks, setLikedTracks] = useState<Track[]>([]);
 
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
