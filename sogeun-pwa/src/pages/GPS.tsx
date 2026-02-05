@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import type { Track } from "./SearchPage";
-import { EventSourcePolyfill } from "event-source-polyfill";
+//import { EventSourcePolyfill } from "event-source-polyfill";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 /* // SearchPage에서 Track 타입을 못 가져올 경우 주석 해제
 export interface Track {
@@ -365,6 +365,7 @@ const GPS: React.FC<GPSProps> = ({
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "text/event-stream",
+            "Cache-Control": "no-cache",
           },
           signal: ctrl.signal,
           async onopen(res) {
@@ -414,6 +415,8 @@ const GPS: React.FC<GPSProps> = ({
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+            "Cache-Control": "no-cache",
             "Content-Type": "application/json",
           },
         })
