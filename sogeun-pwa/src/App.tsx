@@ -7,6 +7,7 @@ import AuthPage from "./pages/AuthPage";
 import GPS from "./pages/GPS";
 import SearchPage from "./pages/SearchPage";
 import ProfileEditPage from "./pages/ProfileEditPage";
+import ProfilePage from './pages/ProfilePage';
 import type { Track } from "./pages/SearchPage";
 
 const MainScreen = () => {
@@ -59,6 +60,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<AuthPage />} />
         <Route path="/gps" element={<MainScreen />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/edit" element={<ProfileEditPage />} />
       </Routes>
     </BrowserRouter>
