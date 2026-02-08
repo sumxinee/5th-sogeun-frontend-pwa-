@@ -221,11 +221,32 @@ const GPS: React.FC<GPSProps> = ({
     return circles;
   });
 
-  // 4. 레이더 장식용 회전 선들
+  // 4. 레이더 장식용 회전 선들 (수정됨)
   const extraSegments = [
-    { r: 145, w: 1, d: "4 4", s: 20, dir: 1 },
-    { r: 125, w: 3, d: "40 80", s: 15, dir: -1 },
-    { r: 70, w: 2, d: "25 65", s: 10, dir: -1 },
+    {
+      r: 140,
+      w: 4,
+      d: "120 280",
+      s: 8,
+      dir: 1,
+      color: "var(--sogun-cyan)",
+    }, // 가장 바깥쪽 두꺼운 파란 원호
+    {
+      r: 120,
+      w: 1,
+      d: "40 80",
+      s: 15,
+      dir: -1,
+      color: "var(--sogun-white)",
+    },
+    {
+      r: 90,
+      w: 2,
+      d: "180 180",
+      s: 12,
+      dir: 1,
+      color: "rgba(34, 211, 238, 0.4)",
+    },
   ];
 
   // 5. 심장박동 Path
@@ -747,13 +768,13 @@ const GPS: React.FC<GPSProps> = ({
                 strokeWidth={seg.w}
                 strokeDasharray={seg.d}
                 strokeLinecap="round"
+                style={{ filter: "drop-shadow(0 0 8px var(--sogun-cyan))" }}
                 animate={{ rotate: 360 * seg.dir }}
                 transition={{
                   duration: seg.s,
                   repeat: Infinity,
                   ease: "linear",
                 }}
-                style={{ transformOrigin: "210px 210px" }}
               />
             ))}
           </svg>
@@ -858,36 +879,39 @@ const GPS: React.FC<GPSProps> = ({
         </button>
       </div>
 
-      {/* 5. 사용자 리스트 (여기가 수정됨: 배경 하얗게) */}
+      {/* 5. 사용자 리스트  */}
       <div className="flex-1 px-6 pb-32 z-10 overflow-y-auto space-y-4 scrollbar-hide">
         {nearbyUsers.map((user) => (
           <div
             key={user.id}
             onClick={() => setSelectedUser(user)}
-            // [수정] bg-white/70 으로 변경하여 더 하얗게 만듦
-            className="flex items-center bg-white/70 backdrop-blur-xl p-4 rounded-[24px] border border-white/40 shadow-xl active:scale-95 transition-transform cursor-pointer"
+            className="flex items-center bg-white/30 backdrop-blur-md p-4 rounded-[28px] border border-white/20 shadow-sm active:scale-95 transition-transform cursor-pointer"
           >
-            <div className="w-12 h-12 bg-white/50 rounded-2xl flex items-center justify-center mr-4 pointer-events-none overflow-hidden shadow-inner">
-              <img
-                src={user.artworkUrl}
-                className="w-full h-full object-cover"
-                alt="art"
-              />
+            <div className="w-14 h-14 bg-white/40 rounded-2xl flex items-center justify-center mr-4 overflow-hidden">
+              {user.artworkUrl ? (
+                <img
+                  src={user.artworkUrl}
+                  className="w-full h-full object-cover"
+                  alt="art"
+                />
+              ) : (
+                <Icons.Music />
+              )}
             </div>
-            <div className="flex-1 pointer-events-none">
-              <h3 className="text-sm font-black text-gray-800 leading-tight truncate">
+            <div className="flex-1">
+              <h3 className="text-[15px] font-bold text-white leading-tight truncate">
                 {user.song}
               </h3>
-              <p className="text-[11px] text-gray-500 mt-1 font-bold">
+              <p className="text-[12px] text-white/70 mt-1 font-medium">
                 {user.name}
               </p>
             </div>
-            <div className="text-right pointer-events-none">
-              <div className="text-pink-500 text-xs font-bold mb-1.5">
-                ♥ 234
+            <div className="text-right">
+              <div className="text-[#FF7EB3] text-[12px] font-bold mb-1 flex items-center justify-end gap-1">
+                <span className="text-[10px]">♥</span> 234
               </div>
-              <div className="flex items-center justify-end font-bold text-[10px] text-gray-400">
-                <div className="w-1.5 h-1.5 bg-pink-500 rounded-full mr-1.5" />
+              <div className="flex items-center justify-end font-medium text-[10px] text-white/50">
+                <div className="w-1.5 h-1.5 bg-[#FF7EB3] rounded-full mr-1.5" />
                 {user.distance}
               </div>
             </div>
@@ -895,58 +919,89 @@ const GPS: React.FC<GPSProps> = ({
         ))}
       </div>
 
-      {/* 6. 하단 내비게이션 */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[85%] h-20 bg-white/95 backdrop-blur-3xl rounded-[40px] border border-white/50 flex justify-around items-center px-6 shadow-2xl z-[100]">
+      {/* 6. 하단 내비게이션 및 Now Playing 카드 (너비 및 위치 완전 수정) */}
+      {/* 6. 하단 내비게이션 (ProfilePage와 스타일 통일) */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] z-[100] pointer-events-none">
+        {/* [Now Playing] 하단바 바로 위에 위치하도록 배치 */}
         <AnimatePresence>
           {currentTrack && (
             <motion.div
               onClick={() => onSelectTrack(currentTrack)}
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: -260 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              className="absolute bottom-1/2 left-0 right-0 mx-auto bg-white/80 backdrop-blur-xl border border-white/40 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] cursor-pointer z-[110] justify-center"
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+              /* 하단바와 겹치지 않게 mb-6 추가, 정중앙 정렬을 위해 mx-auto */
+              className="pointer-events-auto mx-auto mb-6 bg-white/40 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[210px] cursor-pointer"
             >
-              <div className="w-9 h-9 rounded-xl bg-white/20 overflow-hidden border border-white/40">
+              <div className="w-10 h-10 rounded-xl bg-white/20 overflow-hidden flex-shrink-0">
                 <img
                   src={currentTrack.artworkUrl100}
                   alt="art"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div>
-                <p className="text-[12px] font-black text-gray-800 truncate max-w-[100px] leading-tight">
+              <div className="flex flex-col overflow-hidden text-left">
+                <span className="text-[8px] font-black text-[#FF4B91] tracking-wider mb-0.5 uppercase">
+                  Now Playing
+                </span>
+                <p className="text-[14px] font-bold text-white leading-tight truncate">
                   {currentTrack.trackName}
+                </p>
+                <p className="text-[11px] text-white/70 truncate">
+                  {currentTrack.artistName}
                 </p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-        <button
-          onClick={() => navigate("/gps")}
-          className="flex flex-col items-center text-pink-500 font-black"
-        >
-          <Icons.Home />
-          <span className="text-[10px] mt-1">홈</span>
-        </button>
-        <div className="-mt-12">
-          <motion.button
-            onClick={onPlusClick}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg border-4 border-white"
-          >
-            <Icons.Plus />
-          </motion.button>
-        </div>
-        <button
-          onClick={() => navigate("/profile")}
-          className="flex flex-col items-center text-gray-400 font-black opacity-70"
-        >
-          <Icons.Profile />
-          <span className="text-[10px] mt-1">나</span>
-        </button>
-      </div>
 
+        {/* [Nav Bar] ProfilePage의 구조와 100% 동일하게 구현 */}
+        <div className="pointer-events-auto w-full h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl relative">
+          {/* 홈 버튼 (GPS 페이지가 '홈'이므로 활성화 색상 적용) */}
+          <button
+            onClick={() => navigate("/")}
+            className="flex flex-col items-center text-[#FF4B6E]"
+          >
+            <Icons.Home />
+            <span className="text-[10px] font-bold mt-1">홈</span>
+          </button>
+
+          {/* 중앙 플러스 버튼 (ProfilePage와 동일한 그라데이션 및 위치) */}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-6">
+            <motion.button
+              onClick={onPlusClick}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-[64px] h-[64px] bg-gradient-to-tr from-[#FFDEE9] to-[#B5FFFC] rounded-full flex items-center justify-center shadow-lg border-[4px] border-[#F0F4F8]"
+              style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="white"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={3}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+            </motion.button>
+          </div>
+
+          {/* 내 정보 버튼 (비활성화 상태) */}
+          <button
+            onClick={() => navigate("/profile")}
+            className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
+          >
+            <Icons.Profile />
+            <span className="text-[10px] font-bold mt-1">나</span>
+          </button>
+        </div>
+      </div>
       {/* 7. 바텀시트 모달 (디자인 유지) */}
       <AnimatePresence>
         {selectedUser && (
