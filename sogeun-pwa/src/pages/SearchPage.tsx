@@ -70,6 +70,11 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   // 트랙 최종 선택
   const handleFinalSelect = async (track: Track) => {
     try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = ""; // 소스 초기화
+      }
+      setPlayingTrackId(null);
       onSelectTrack(track);
       onBack();
     } catch (err) {
@@ -93,6 +98,8 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
       setPlayingTrackId(null);
     } else if (audioRef.current) {
       audioRef.current.src = track.previewUrl;
+      audioRef.current.loop = true; // ✅ 무한 반복 재생 활성화
+      audioRef.current.volume = 0.2; // ✅ 음량을 10%로 조절 (0.0 ~ 1.0)
       audioRef.current.play().catch(() => {});
       setPlayingTrackId(track.trackId);
     }
