@@ -3,9 +3,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../index.css"; // 전역 CSS 불러오기
+import { useSetAtom } from "jotai";
+import { accessTokenAtom } from "../store/auth";
+import { userIdAtom } from "../store/auth";
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const setAccessToken = useSetAtom(accessTokenAtom);
 
   // true면 로그인 화면, false면 회원가입 화면
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -33,7 +37,7 @@ export default function AuthPage() {
     setNickname("");
     setErrorMessage(""); // 에러 메시지 초기화
   };
-
+  const setUserId = useSetAtom(userIdAtom);
   // 로그인 로직
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +56,12 @@ export default function AuthPage() {
 
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
-        if (response.data.accessToken) {
-          localStorage.setItem("accessToken", response.data.accessToken);
+
+        const { accessToken, userId } = response.data; // 서버 응답에 userId가 있다고 가정
+
+        if (accessToken && userId) {
+          setAccessToken(accessToken);
+          setUserId(userId); // 내 진짜 ID 저장
         }
         alert("소근에 오신 것을 환영해요!");
         navigate("/gps", { state: { userId: id } });
@@ -166,11 +174,7 @@ export default function AuthPage() {
         <span>
           {isLoginMode ? "계정이 없으신가요?" : "이미 계정이 있으신가요?"}
         </span>
-        <button
-          type="button"
-          className="auth-toggle-link"
-          onClick={toggleMode}
-        >
+        <button type="button" className="auth-toggle-link" onClick={toggleMode}>
           {isLoginMode ? "회원가입하기" : "로그인하기"}
         </button>
       </div>

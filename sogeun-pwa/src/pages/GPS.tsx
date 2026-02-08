@@ -2,18 +2,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import type { Track } from "./SearchPage";
-//import { EventSourcePolyfill } from "event-source-polyfill";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-/* // SearchPage에서 Track 타입을 못 가져올 경우 주석 해제
-export interface Track {
-  trackId: number;
-  trackName: string;
-  artistName: string;
-  artworkUrl100: string;
-  previewUrl: string;
-}
-*/
+import { useAtom, useAtomValue } from "jotai"; // 1. Jotai 추가
+import { accessTokenAtom, userIdAtom } from "../store/auth"; // 토큰 아톰
+import { locationAtom } from "../store/location"; // 기존에 있던 위치 아톰 활용
+import type { Track } from "./SearchPage";
 interface ServerUserData {
   id: number;
   nickname: string;
@@ -189,18 +182,16 @@ const GPS: React.FC<GPSProps> = ({
   const [isLiked, setIsLiked] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 내 현재 위치 상태
-  const [myLocation, setMyLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-
-  // 서버로부터 받은 Raw Data 상태
+  // 2. Jotai 상태 구독
+  const [token, setToken] = useAtom(accessTokenAtom);
+  const [myLocation, setMyLocation] = useAtom(locationAtom); // 전역 위치 상태 사용
   const [serverUsers, setServerUsers] = useState<ServerUserData[]>([]);
+  const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([]);
+  const [myUserId] = useAtom(userIdAtom);
+  const BASE_URL =
+    "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
 
-  // 화면에 렌더링할 가공된 유저 데이터 (Mock Data 제거됨)
-  const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([]); // 내 현재 위치 상태
-
+  // ------------------- [배경 및 HUD 초기 설정] -------------------
   // 2. 배경 파티클
   const [particles] = useState<Particle[]>(() =>
     Array.from({ length: 40 }, (_, i) => ({
@@ -337,7 +328,8 @@ const GPS: React.FC<GPSProps> = ({
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);*/
-  const BASE_URL =
+
+  /* const BASE_URL =
     "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
   const userId = 1; // 테스트용 아이디
 
@@ -472,7 +464,142 @@ const GPS: React.FC<GPSProps> = ({
 
     setNearbyUsers(updatedUsers);
   }, [myLocation, serverUsers]);
+*/
+  // ------------------- [기능 1: 실시간 주변 유저 수신 (SSE)] -------------------
 
+  useEffect(() => {
+    // 토큰이나 위치가 없으면 연결하지 않음
+    if (!token || !myLocation || !myUserId) {
+      console.log("⏳ SSE 대기 중: ", {
+        token: !!token,
+        location: !!myLocation,
+        userId: !!myUserId,
+      });
+      return;
+    }
+
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${myUserId}&lat=${myLocation.lat}&lon=${myLocation.lng}`;
+    const ctrl = new AbortController();
+
+    const connectSSE = async () => {
+      try {
+        await fetchEventSource(sseEndpoint, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Jotai에서 가져온 토큰
+            //Accept: "text/event-stream",
+            Accept: "*/*",
+            //"Cache-Control": "no-cache",
+          },
+          signal: ctrl.signal,
+          onopen: async (res) => {
+            if (res.ok) console.log("🚀 SSE 연결 성공!");
+            else if (res.status === 401 || res.status === 403) {
+              setToken(null); // 토큰 만료 시 초기화
+              console.error("인증 에러: 로그인이 필요합니다.");
+              console.error("SSE 연결 실패 상태코드:", res.status);
+            }
+          },
+          onmessage: (event) => {
+            if (event.data && event.data !== "heartbeat") {
+              try {
+                setServerUsers(JSON.parse(event.data));
+              } catch (e) {
+                console.error("파싱 실패:", e);
+              }
+            }
+          },
+          onerror: (err) => {
+            console.error("SSE 에러:", err);
+            ctrl.abort();
+          },
+        });
+      } catch (err) {
+        console.log("SSE 중단 또는 에러 발생");
+      }
+    };
+
+    connectSSE();
+    return () => ctrl.abort(); // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
+  }, [token, myLocation?.lat, myLocation?.lng]); // 3. 토큰과 위치를 의존성에 추가
+
+  // ------------------- [기능 2: 내 위치 추적 및 서버 전송 (POST)] -------------------
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      console.error("이 브라우저는 위치 정보를 지원하지 않습니다.");
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const newPos = { lat: latitude, lng: longitude };
+
+        // 위치 상태 업데이트 (Jotai)
+        setMyLocation(newPos);
+
+        /*if (!token) return;
+
+        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
+
+        fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })*/
+        if (token && myUserId) {
+          const url = `${BASE_URL}/sse/location/update?userId=${myUserId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
+
+          fetch(url, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          })
+            .then((res) => {
+              if (res.ok) console.log("📍 위치 업데이트 성공!");
+            })
+            .catch((err) => console.error("위치 전송 실패:", err));
+        }
+      },
+      (error) => console.error("위치 추적 오류:", error),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [token, myUserId]); // 토큰이 있을 때만 watch 시작
+
+  // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
+  useEffect(() => {
+    if (!myLocation || serverUsers.length === 0) return;
+
+    const updatedUsers = serverUsers.map((user) => {
+      const dy = user.latitude - myLocation.lat;
+      const dx = user.longitude - myLocation.lng;
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000;
+      const uiRadius = Math.min(rawDistMeters * 2, 140);
+
+      return {
+        id: user.id,
+        name: user.nickname,
+        song: user.musicName,
+        artist: user.artistName,
+        lat: user.latitude,
+        lng: user.longitude,
+        artworkUrl: user.artworkUrl,
+        previewUrl: user.previewUrl,
+        angle: angle,
+        radius: uiRadius,
+        distance: `${Math.floor(rawDistMeters)}m`,
+      };
+    });
+
+    setNearbyUsers(updatedUsers);
+  }, [myLocation, serverUsers]);
   // ------------------- [Effect: Geolocation] -------------------
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
