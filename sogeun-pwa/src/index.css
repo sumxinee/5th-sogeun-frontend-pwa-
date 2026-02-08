@@ -605,3 +605,191 @@ button {
   font-size: 24px;
   cursor: pointer;
 }
+
+/* =========================================
+   5. 마이페이지 (프로필)
+   ========================================= */
+/* 1. 프로필 이미지와 레벨 뱃지 영역 */
+.profile-image-container {
+  position: relative; /* 뱃지 위치 기준점 */
+  width: 120px;
+  height: 120px;
+  margin: 20px 0;
+}
+
+.profile-img-lg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  object-fit: cover;
+}
+
+.level-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 36px;
+  height: 36px;
+  background-color: #5FD3C8; /* 민트색 */
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgb(0, 0, 0);
+  font-weight: bold;
+  font-size: 14px;
+  border: 2px solid white;
+}
+
+/* 2. 텍스트 정보들 */
+.user-handle {
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.nickname-row {
+  display: flex;
+  align-items: baseline; /* 글자 밑라인 기준 정렬 */
+  justify-content: center; /* 가로 중앙 정렬 */
+  gap: 8px; /* 닉네임과 거리 사이 간격 */
+  margin-bottom: 6px; /* 아래 재생 정보와의 간격 */
+}
+
+.user-nickname {
+  font-size: 20px;
+  font-weight: 800;
+  color: #333;
+}
+
+.user-location {
+  font-size: 13px;
+  color: #888; /* 회색 텍스트 */
+  font-weight: 500;
+}
+
+.play-info-row {
+  display: flex;
+  align-items: center; /* 아이콘 수직 중앙 정렬 */
+  justify-content: center; /* 가로 중앙 정렬 */
+  gap: 2px;
+  font-size: 13px;
+  color: white;
+  font-weight: 600;
+  margin-top: 3px;
+  margin-bottom: 20px; /* 아래 버튼들과의 간격 */
+}
+
+/* 3. 버튼 두 개 (프로필 수정 / 소근 통계) */
+.action-btn-row {
+  display: flex;
+  gap: 10px;
+  width: 90%;
+  margin-bottom: 25px;
+}
+
+.glass-btn {
+  flex: 1;
+  padding: 8px 0;
+  background: rgba(255, 255, 255, 0.3); /* 반투명 */
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  color: #555;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(5px);
+}
+
+/* 4. 레벨 카드 (유리 효과) */
+.level-card {
+  width: 90%;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  padding: 15px;
+  box-sizing: border-box;
+  margin-top: -3px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.level-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #555;
+  font-weight: 600;
+}
+
+.level-footer {
+  font-size: 11px;
+  color: white;
+  margin-top: 6px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+@keyframes fillUp {
+  from { width: 0; }
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF7E79, #5FD3C8, #FF7E79);
+  background-size: 200% 100%; /* 배경을 옆으로 길게 늘림 */
+  
+  border-radius: 4px;
+  
+  /* 애니메이션: 차오르는 효과(fillUp) + 색상 흐르는 효과(gradientMove) */
+  animation: 
+    fillUp 1.5s ease-out forwards,
+    gradientMove 3s linear infinite;
+}
+
+/* 5. 좋아요 누른 노래 (가로 스크롤) */
+.songs-section {
+  width: 100%;
+  padding-left: 20px; /* 왼쪽 여백 */
+}
+
+.section-title {
+  font-size: 14px;
+  color: white;
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.song-list-row {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto; /* 가로 스크롤 */
+  padding-right: 20px;
+  padding-bottom: 10px;
+}
+
+.song-item img {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  object-fit: cover;
+}
