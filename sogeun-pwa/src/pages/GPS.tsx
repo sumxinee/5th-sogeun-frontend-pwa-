@@ -177,10 +177,39 @@ const GPS: React.FC<GPSProps> = ({
   onSelectTrack,
 }) => {
   const navigate = useNavigate();
-  const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
+  //const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
 
   const [isLiked, setIsLiked] = useState(false);
+  const [isThumbUp, setIsThumbUp] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const togglePlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation(); // 클릭 시 다른 레이어로 이벤트가 퍼지는 것 방지
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      // 멈춰있는 오디오를 다시 재생할 때 src가 비어있지 않은지 확인
+      /*if (audioRef.current.src) {
+        audioRef.current
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            console.error("Playback failed:", err);
+            setIsPlaying(false);
+          });
+      }*/
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => console.error("재생 실패:", err));
+    }
+  };
+  // 검색 결과가 바뀔 때마다 실행
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
 
   // 2. Jotai 상태 구독
   const [token, setToken] = useAtom(accessTokenAtom);
@@ -558,18 +587,7 @@ const GPS: React.FC<GPSProps> = ({
 
         // 위치 상태 업데이트 (Jotai)
         setMyLocation(newPos);
-
-        /*if (!token) return;
-
-        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
-
-        fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })*/
+        // 토큰이 없으면 전송하지 않음
         if (token && myUserId) {
           const url = `${BASE_URL}/sse/location/update?userId=${myUserId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
 
@@ -595,11 +613,27 @@ const GPS: React.FC<GPSProps> = ({
 
   // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
   useEffect(() => {
-    if (!myLocation || serverUsers.length === 0) return;
+    // 1. 레이더에 항상 띄울 목데이터 정의
+    const mockUser: DetectedUser = {
+      id: 999,
+      name: "홍익대학교 동기",
+      song: "Ditto",
+      artist: "NewJeans",
+      distance: "123m",
+      lat: 37.55,
+      lng: 126.924,
+      angle: 45,
+      radius: 80,
+      artworkUrl:
+        "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/63/e5/e2/63e5e2e4-829b-924d-a1dc-8058a1d69bd4/196922462702_Cover.jpg/100x100bb.jpg",
+      previewUrl:
+        "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/62/90/70/6290709d-e8ef-fbba-57f0-b5ef4ffb556d/mzaf_5031206073063517293.plus.aac.p.m4a",
+    };
 
+    // 2. 서버 데이터 변환 로직 (기존 코드 유지)
     const updatedUsers = serverUsers.map((user) => {
-      const dy = user.latitude - myLocation.lat;
-      const dx = user.longitude - myLocation.lng;
+      const dy = user.latitude - (myLocation?.lat || 0);
+      const dx = user.longitude - (myLocation?.lng || 0);
       const angle = Math.atan2(dy, dx) * (180 / Math.PI);
       const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000;
       const uiRadius = Math.min(rawDistMeters * 2, 140);
@@ -619,7 +653,8 @@ const GPS: React.FC<GPSProps> = ({
       };
     });
 
-    setNearbyUsers(updatedUsers);
+    // 3. [핵심] 목데이터 + 서버 데이터를 합쳐서 세팅
+    setNearbyUsers([mockUser, ...updatedUsers]);
   }, [myLocation, serverUsers]);
   // ------------------- [Effect: Geolocation] -------------------
   useEffect(() => {
@@ -651,27 +686,78 @@ const GPS: React.FC<GPSProps> = ({
 
   // ------------------- [Effect: Audio Playback] -------------------
   useEffect(() => {
+    let isComponentActive = true;
+    // 1. 기존 오디오 객체가 있다면 즉시 정지 및 소스 초기화
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current.load();
       audioRef.current = null;
+      setIsPlaying(false);
     }
-    if (selectedUser && selectedUser.previewUrl) {
+
+    // 2. 바텀시트가 열려있고(selectedUser 존재) URL이 있을 때만 재생
+    if (selectedUser?.previewUrl) {
       const audio = new Audio(selectedUser.previewUrl);
       audio.loop = true;
-      audio.volume = 0.5;
-      audio.play().catch((err) => console.log("자동 재생 막힘:", err));
+      audio.volume = 0.1;
       audioRef.current = audio;
+
+      const playAudio = async () => {
+        try {
+          if (!isComponentActive) return;
+          await audio.play();
+          if (isComponentActive) setIsPlaying(true);
+        } catch (err) {
+          if (isComponentActive) setIsPlaying(false);
+          console.warn("자동 재생 차단됨. 사용자의 인터랙션이 필요합니다.");
+        }
+      };
+
+      audioRef.current = audio;
+      playAudio();
     }
+
+    // 3. [중요] 클린업 함수: 바텀시트가 닫힐 때(selectedUser -> null) 음악 정지
     return () => {
+      isComponentActive = false;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current.load();
+        audioRef.current = null;
+        setIsPlaying(false);
+      }
+    };
+  }, [selectedUser]); // selectedUser 상태를 감시함
+  // 검색에서 트랙을 선택했을 때(currentTrack) 음악 재생을 위한 Effect
+  useEffect(() => {
+    if (currentTrack?.previewUrl) {
+      // 기존 오디오 정지
       if (audioRef.current) {
         audioRef.current.pause();
       }
-    };
-  }, [selectedUser]);
 
+      const audio = new Audio(currentTrack.previewUrl);
+      audio.loop = true;
+      audio.volume = 0.2;
+      audioRef.current = audio;
+
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    }
+  }, [currentTrack]);
+  // ------------------- [Handle Drag - 수정됨] -------------------
   const handleDragEnd = (_: any, info: PanInfo) => {
+    // 아래로 100px 이상 내리거나 빠르게 휘두르면 닫기
     if (info.offset.y > 100 || info.velocity.y > 500) {
       setSelectedUser(null);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
     }
   };
 
@@ -711,7 +797,6 @@ const GPS: React.FC<GPSProps> = ({
           />
         ))}
       </div>
-
       {/* 2. 상단 헤더 */}
       <div className="flex justify-between items-start pt-12 px-6 z-10">
         <div>
@@ -726,7 +811,6 @@ const GPS: React.FC<GPSProps> = ({
           <span className="mr-1">⚡</span> Lv.7
         </div>
       </div>
-
       {/* 3. 메인 레이더 */}
       <div className="relative flex flex-col items-center justify-center w-full aspect-square mt-4 mb-4 z-10 px-6">
         {/* Waves */}
@@ -801,7 +885,7 @@ const GPS: React.FC<GPSProps> = ({
           />
         ))}
 
-        {/* Users (여기가 수정됨: 네모난 툴팁 복구) */}
+        {/* Users */}
         {nearbyUsers.map((user) => (
           <div
             key={user.id}
@@ -818,7 +902,7 @@ const GPS: React.FC<GPSProps> = ({
               className="w-4 h-4 bg-white rounded-full shadow-[0_0_15px_white] z-30 cursor-pointer"
             />
 
-            {/* [복구됨] 작은 반투명 네모 (툴팁) */}
+            {/* 작은 반투명 네모 (툴팁) */}
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -871,14 +955,12 @@ const GPS: React.FC<GPSProps> = ({
           </div>
         </div>
       </div>
-
       {/* 4. 반경 설정 */}
       <div className="flex justify-center z-10 mt-6 mb-6">
         <button className="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/40 text-[11px] font-black shadow-lg">
           내 반경 350m
         </button>
       </div>
-
       {/* 5. 사용자 리스트  */}
       <div className="flex-1 px-6 pb-32 z-10 overflow-y-auto space-y-4 scrollbar-hide">
         {nearbyUsers.map((user) => (
@@ -918,31 +1000,47 @@ const GPS: React.FC<GPSProps> = ({
           </div>
         ))}
       </div>
-
       {/* 6. 하단 내비게이션 및 Now Playing 카드 (너비 및 위치 완전 수정) */}
-      {/* 6. 하단 내비게이션 (ProfilePage와 스타일 통일) */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] z-[100] pointer-events-none">
+
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] z-[120]">
         {/* [Now Playing] 하단바 바로 위에 위치하도록 배치 */}
         <AnimatePresence>
           {currentTrack && (
             <motion.div
-              onClick={() => onSelectTrack(currentTrack)}
+              onClick={togglePlay} // 위에서 수정한 함수 연결
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              /* 하단바와 겹치지 않게 mb-6 추가, 정중앙 정렬을 위해 mx-auto */
-              className="pointer-events-auto mx-auto mb-6 bg-white/40 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[210px] cursor-pointer"
+              //style={{ pointerEvents: "auto" }} // 인라인 스타일로 강제 부여
+              className="pointer-events-auto mx-auto mb-59 bg-white/20 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[180px] cursor-pointer z-[999] relative"
             >
-              <div className="w-10 h-10 rounded-xl bg-white/20 overflow-hidden flex-shrink-0">
+              <div className="relative w-10 h-10 rounded-xl bg-white/20 overflow-hidden flex-shrink-0">
                 <img
                   src={currentTrack.artworkUrl100}
-                  alt="art"
                   className="w-full h-full object-cover"
+                  alt="art"
                 />
+                {/* ✅ 재생 중일 때만 이미지 위에 작은 막대기 애니메이션 표시 */}
+                {isPlaying && (
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-0.5 px-1">
+                    {[1, 2, 3].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        animate={{ height: ["20%", "60%", "20%"] }}
+                        transition={{
+                          duration: 0.5,
+                          repeat: Infinity,
+                          delay: i * 0.1,
+                        }}
+                        className="w-0.5 bg-[#FF4B91] rounded-full"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex flex-col overflow-hidden text-left">
                 <span className="text-[8px] font-black text-[#FF4B91] tracking-wider mb-0.5 uppercase">
-                  Now Playing
+                  {isPlaying ? "Now Playing" : "Paused"}
                 </span>
                 <p className="text-[14px] font-bold text-white leading-tight truncate">
                   {currentTrack.trackName}
@@ -1003,16 +1101,20 @@ const GPS: React.FC<GPSProps> = ({
         </div>
       </div>
       {/* 7. 바텀시트 모달 (디자인 유지) */}
+
       <AnimatePresence>
         {selectedUser && (
           <>
+            {/* 배경 오버레이 */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedUser(null)}
-              className="fixed inset-0 bg-black/60 z-[150] backdrop-blur-sm"
+              className="fixed inset-0 bg-black/40 z-[150] backdrop-blur-sm"
             />
+
+            {/* 바텀시트 본체 */}
             <motion.div
               drag="y"
               dragConstraints={{ top: 0, bottom: 0 }}
@@ -1022,95 +1124,141 @@ const GPS: React.FC<GPSProps> = ({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 h-[85vh] bg-[#F3F5F9] rounded-t-[36px] z-[200] p-6 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.2)]"
+              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[#F3F7FF]/80 rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl"
             >
-              {/* Header */}
-              <div className="w-full flex justify-between items-center mb-6 px-2">
+              {/* 상단 헤더: 민트색 확인 버튼 */}
+              <div className="w-full flex justify-between items-center mb-4 px-2">
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="p-2 rounded-full text-cyan-400"
+                  className="p-2 text-[#4FD1C5]"
                 >
                   <Icons.ChevronDown />
                 </button>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="text-cyan-400 font-bold text-sm px-2"
+                  className="text-[#4FD1C5] font-bold text-[16px] px-2"
                 >
                   확인
                 </button>
               </div>
 
-              {/* Profile */}
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-20 h-20 bg-gray-200 rounded-full mb-3" />
-                <h2 className="text-lg font-bold text-black mb-0.5">
-                  {selectedUser.name}
+              {/* 프로필 섹션 */}
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-24 h-24 rounded-full mb-4 shadow-inner overflow-hidden border-2 border-white">
+                  {selectedUser.artworkUrl && (
+                    <img
+                      src={selectedUser.artworkUrl}
+                      className="w-full h-full object-cover"
+                      alt="Profile"
+                    />
+                  )}
+                </div>
+                <h2 className="text-[18px] font-black text-black mb-1">
+                  {selectedUser.name} {/* [해결] '사용자' 대신 변수 사용 */}
                 </h2>
-                <p className="text-xs text-gray-400">
+                <p className="text-[14px] text-gray-400 font-medium">
                   {selectedUser.distance} 떨어져 있어요
                 </p>
               </div>
 
-              {/* Album Art & Visualizer */}
-              <div className="flex flex-col items-center flex-1">
-                <div className="relative w-64 h-64 rounded-[24px] overflow-hidden shadow-lg mb-6">
-                  <img
-                    src={selectedUser.artworkUrl}
-                    className="w-full h-full object-cover grayscale-[0.3] contrast-125"
-                    alt="Album Art"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center gap-2">
-                    {[1, 2, 3, 4, 5].map((bar) => (
-                      <motion.div
-                        key={bar}
-                        animate={{
-                          height: [20, 50, 20],
-                          opacity: [0.8, 1, 0.8],
-                        }}
-                        transition={{
-                          duration: 0.5 + Math.random() * 0.3,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                          delay: bar * 0.1,
-                        }}
-                        className="w-2.5 bg-white/90 rounded-full shadow-sm"
-                      />
-                    ))}
-                  </div>
-                  <div className="absolute bottom-4 w-full flex justify-center">
-                    <span className="text-white/40 font-black text-4xl tracking-tighter drop-shadow-md">
-                      NWJNS
-                    </span>
-                  </div>
-                </div>
+              {/* 앨범 정보 전체 */}
+              <div className="flex flex-col items-center w-full px-4 mb-10">
+                <motion.div
+                  whileTap={{ scale: 1 }} // 클릭 효과도 제거하려면 1로 변경
+                  className="flex flex-col items-center cursor-default" // cursor-pointer를 default로 변경
+                >
+                  {/* 앨범 아트 박스 */}
+                  <div className="relative w-60 h-60 rounded-[32px] overflow-hidden shadow-2xl mb-8">
+                    {/* 앨범 이미지 */}
+                    <img
+                      src={selectedUser.artworkUrl}
+                      className="w-full h-full object-cover"
+                      alt="Album Art"
+                    />
 
-                <h3 className="text-xl font-bold text-black mb-1 text-center">
-                  {selectedUser.song}
-                </h3>
-                <p className="text-sm text-gray-400 font-medium text-center">
-                  {selectedUser.artist}
-                </p>
+                    {/* 30% 검정색 필터 (재생 중일 때만 더 어둡게 처리하면 예뻐요) */}
+                    <div
+                      className={`absolute inset-0 bg-black/30 z-10 transition-opacity ${isPlaying ? "opacity-100" : "opacity-0"}`}
+                    />
+
+                    {/* 비주얼라이저 (재생 중일 때만 보임) */}
+                    {isPlaying && (
+                      <>
+                        <div className="absolute inset-0 bg-black/30" />{" "}
+                        {/* 어둡게 만들기 */}
+                        <div className="absolute inset-0 flex items-center justify-center gap-3">
+                          {[1, 2, 3, 4, 3, 2, 1].map((_, i) => (
+                            <motion.div
+                              key={i}
+                              animate={{ height: [30, 80, 30] }}
+                              transition={{
+                                duration: 0.6,
+                                repeat: Infinity,
+                                delay: i * 0.1,
+                              }}
+                              className="w-3 bg-white/70 rounded-full"
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* 노래 정보 텍스트 */}
+                  <div className="text-center">
+                    <h3 className="text-[22px] font-black text-black mb-1 leading-tight">
+                      {selectedUser.song}
+                    </h3>
+                    <p className="text-[15px] text-gray-500 font-bold">
+                      {selectedUser.artist}
+                    </p>
+                  </div>
+                </motion.div>
               </div>
 
-              {/* Buttons */}
-              <div className="flex items-center justify-between w-full px-8 mb-4">
-                <button
-                  onClick={() => setIsLiked(!isLiked)}
-                  className="p-3 rounded-full hover:bg-gray-100 transition-colors active:scale-90"
-                >
-                  {isLiked ? <Icons.HeartFilled /> : <Icons.HeartOutline />}
-                </button>
-                <button className="flex-1 ml-6 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
-                  <span>노래 좋아요 보내기</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+              {/* 하단 버튼 영역: 핫핑크 하트 & 민트 엄지 */}
+              <div className="flex flex-col items-center pb-12">
+                <div className="flex items-center gap-12">
+                  {/* 핫핑크 하트 버튼 */}
+                  <motion.button
+                    onClick={() => setIsLiked(!isLiked)}
+                    whileTap={{ scale: 0.9 }}
+                    className="flex flex-col items-center"
                   >
-                    <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                  </svg>
-                </button>
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      /* isLiked가 false일 때는 회색(#D1D5DB), 
+          true일 때는 핫핑크(#FF4B91)로 채워짐 
+        */
+                      fill={isLiked ? "#FF4B91" : "#D1D5DB"}
+                      className="transition-colors duration-300"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  </motion.button>
+
+                  {/* 민트 엄지 버튼 */}
+                  <motion.button
+                    onClick={() => setIsThumbUp(!isThumbUp)}
+                    whileTap={{ scale: 0.9 }}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      /* isThumbUp이 false일 때는 회색(#D1D5DB), 
+          true일 때는 민트색(#4FD1C5)으로 채워짐 
+        */
+                      fill={isThumbUp ? "#4FD1C5" : "#D1D5DB"}
+                      className="transition-colors duration-300"
+                    >
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                    </svg>
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </>
