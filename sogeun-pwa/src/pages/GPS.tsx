@@ -6,6 +6,7 @@ import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useAtom, useAtomValue } from "jotai"; // 1. Jotai 추가
 import { accessTokenAtom, userIdAtom } from "../store/auth"; // 토큰 아톰
 import { locationAtom } from "../store/location"; // 기존에 있던 위치 아톰 활용
+import { currentTrackAtom, isPlayingAtom } from "../store/music";
 import type { Track } from "./SearchPage";
 interface ServerUserData {
   id: number;
@@ -171,17 +172,15 @@ const Icons = {
   ),
 };
 
-const GPS: React.FC<GPSProps> = ({
-  onPlusClick,
-  currentTrack,
-  onSelectTrack,
-}) => {
+const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
   const navigate = useNavigate();
   //const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
 
   const [isLiked, setIsLiked] = useState(false);
   const [isThumbUp, setIsThumbUp] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrack, setCurrentTrack] = useAtom(currentTrackAtom);
+  const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
+
   const togglePlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation(); // 클릭 시 다른 레이어로 이벤트가 퍼지는 것 방지
     if (!audioRef.current) return;
@@ -1012,7 +1011,7 @@ const GPS: React.FC<GPSProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
               //style={{ pointerEvents: "auto" }} // 인라인 스타일로 강제 부여
-              className="pointer-events-auto mx-auto mb-59 bg-white/20 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[180px] cursor-pointer z-[999] relative"
+              className="pointer-events-auto mx-auto mb-70 bg-white/20 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[180px] cursor-pointer z-[999] relative"
             >
               <div className="relative w-10 h-10 rounded-xl bg-white/20 overflow-hidden flex-shrink-0">
                 <img
