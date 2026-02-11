@@ -20,7 +20,7 @@ export interface Track {
 
 interface SearchPageProps {
   onBack: () => void;
-  onSelectTrack: (track: Track) => void;
+  onPlayMusic: (url: string) => void;
 }
 
 // 슬라이드 애니메이션 설정
@@ -41,7 +41,7 @@ const slideVariants = {
   }),
 };
 
-const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
+const SearchPage: React.FC<SearchPageProps> = ({ onBack, onPlayMusic }) => {
   const [activeTab, setActiveTab] = useState<"search" | "likes">("search");
   const [direction, setDirection] = useState(0);
   const [query, setQuery] = useState("");
@@ -56,7 +56,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   // 스크롤 위치를 기억할 변수
   const prevScrollY = useRef(0);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  //const audioRef = useRef<HTMLAudioElement | null>(null);
   const dragX = useMotionValue(0);
   // 드래그 시 배경 투명도 조절 (검은색 대신 부드럽게 사라지도록)
   const dragOpacity = useTransform(dragX, [-200, 0, 200], [0, 1, 0]);
@@ -88,6 +88,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
       }
     }
   };
+
   // 탭 변경 함수 (클릭 시에도 애니메이션 방향 설정)
   const handleTabChange = (tab: "search" | "likes") => {
     if (activeTab === tab) return;
@@ -141,21 +142,6 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
   }, [results, limit]); // results나 limit이 바뀔 때 실행
 
   // 트랙 최종 선택
-  const handleFinalSelect = async (track: Track) => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = ""; // 소스 초기화
-      }
-      setPlayingTrackId(null);
-      onSelectTrack(track);
-      onBack();
-    } catch (err) {
-      console.error("전송 실패:", err);
-      onSelectTrack(track);
-      onBack();
-    }
-  };
 
   const toggleLike = (track: Track) => {
     setLikedTracks((prev) =>
@@ -164,8 +150,31 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
         : [track, ...prev],
     );
   };
+  // [1] 앨범 커버 클릭 시: 음악 재생 & 이퀄라이저 표시 (뒤로가기 X)
+  const handleAlbumClick = (e: React.MouseEvent, track: Track) => {
+    e.stopPropagation(); // 부모(박스)의 클릭 이벤트가 실행되지 않게 막음!
+    if (playingTrackId === track.trackId) {
+      // 이미 재생 중인 곡을 누름 -> 멈춤
+      setPlayingTrackId(null); // 상태 초기화
+      onPlayMusic(""); // 음악 끄기 (빈 문자열 전달)
+    } else {
+      // 다른 곡을 누름 -> 재생
+      setPlayingTrackId(track.trackId); // 상태 설정
+      onPlayMusic(track.previewUrl); // 음악 켜기
+      const audioEl = document.querySelector("audio");
+      if (audioEl) audioEl.volume = 0.2;
+    }
+  };
 
-  const togglePlay = (track: Track) => {
+  // [2] 박스 전체 클릭 시: 음악 재생 & GPS 화면으로 이동
+  const handleBoxClick = (track: Track) => {
+    onPlayMusic(track.previewUrl); // 음악은 계속 나와야 하니까 재생 요청
+    const audioEl = document.querySelector("audio");
+    if (audioEl) audioEl.volume = 0.2;
+    onBack(); // 뒤로 가기
+  };
+
+  /*const togglePlay = (track: Track) => {
     if (playingTrackId === track.trackId) {
       audioRef.current?.pause();
       setPlayingTrackId(null);
@@ -176,20 +185,22 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
       audioRef.current.play().catch(() => {});
       setPlayingTrackId(track.trackId);
     }
-  };
+  };*/
 
   // ------------------------------------------------------------------
   // [UI 컴포넌트] 트랙 아이템
   // ------------------------------------------------------------------
   const TrackItem = ({ track }: { track: Track }) => (
     <div
+      // 박스 전체를 누르면 GPS로 이동
+      onClick={() => handleBoxClick(track)}
       className="flex items-center p-3 rounded-[24px] mb-3 backdrop-blur-md transition-colors
-                    bg-white/20 border border-white/30 shadow-sm hover:bg-white/30"
+                  bg-white/20 border border-white/30 shadow-sm hover:bg-white/30 cursor-pointer"
     >
       {/* 앨범 커버 */}
       <div
         className="relative w-14 h-14 rounded-2xl mr-4 shrink-0 overflow-hidden cursor-pointer shadow-inner"
-        onClick={() => togglePlay(track)}
+        onClick={(e) => handleAlbumClick(e, track)}
       >
         <img
           src={track.artworkUrl100}
@@ -198,7 +209,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
         />
 
         {/* 이퀄라이저 애니메이션 */}
-        {playingTrackId === track.trackId && (
+        {playingTrackId === track.trackId ? (
           <div className="absolute inset-0 bg-black/30 flex items-end justify-center pb-3 gap-1">
             <motion.div
               animate={{ height: [4, 12, 4] }}
@@ -216,6 +227,13 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
               className="w-1 bg-white rounded-full"
             />
           </div>
+        ) : (
+          // 재생 중 아닐 땐 Play 아이콘
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity">
+            <svg className="w-6 h-6 fill-white/80" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
         )}
       </div>
 
@@ -232,7 +250,10 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
       {/* 액션 버튼 */}
       <div className="flex items-center gap-3 pl-2">
         <button
-          onClick={() => toggleLike(track)}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleLike(track);
+          }}
           className="active:scale-110 transition-transform p-2 rounded-full hover:bg-white/10"
         >
           <svg
@@ -241,12 +262,6 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
           >
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
-        </button>
-        <button
-          onClick={() => handleFinalSelect(track)}
-          className="px-4 py-2 bg-white text-[#FF6B6B] text-[13px] font-bold rounded-full shadow-lg active:scale-95 transition-all"
-        >
-          선택
         </button>
       </div>
     </div>
@@ -265,8 +280,6 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onSelectTrack }) => {
       className="absolute inset-0 z-50 flex flex-col w-full min-h-screen pt-14 bg-transparent backdrop-blur-sm"
     >
       <div className="absolute inset-0 bg-black/10 -z-10" />
-
-      <audio ref={audioRef} onEnded={() => setPlayingTrackId(null)} />
 
       {/* 상단 헤더 & 토글 */}
       <div className="w-full flex flex-col items-center mb-4 px-6">
