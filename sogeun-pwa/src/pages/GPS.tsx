@@ -376,7 +376,7 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
   }, [token, myUserId]); // 토큰이 있을 때만 watch 시작
 
   // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
-  /* useEffect(() => {
+  useEffect(() => {
     // 1. 레이더에 항상 띄울 목데이터 정의
     const mockUser: DetectedUser = {
       id: 999,
@@ -446,9 +446,9 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);*/
+  }, []);
   // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
-  useEffect(() => {
+  /*useEffect(() => {
     // 1. [수정] 목데이터를 생성하던 변수를 삭제하거나 무시합니다.
 
     // 2. 서버 데이터 변환 로직 (실제 유저들만 계산)
@@ -476,7 +476,7 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
 
     // 3. [핵심] 이제 mockUser 없이 서버에서 온 데이터(updatedUsers)만 세팅합니다.
     setNearbyUsers(updatedUsers);
-  }, [myLocation, serverUsers]);
+  }, [myLocation, serverUsers])*/
 
   // ------------------- [Effect: Audio Playback] -------------------
   useEffect(() => {

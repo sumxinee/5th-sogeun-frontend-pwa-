@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -7,13 +7,24 @@ import AuthPage from "./pages/AuthPage";
 import GPS from "./pages/GPS";
 import SearchPage from "./pages/SearchPage";
 import ProfileEditPage from "./pages/ProfileEditPage";
-import ProfilePage from './pages/ProfilePage';
+import ProfilePage from "./pages/ProfilePage";
 import type { Track } from "./pages/SearchPage";
 
 const MainScreen = () => {
   const [currentPage, setCurrentPage] = useState<"gps" | "search">("gps");
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const [bgmUrl, setBgmUrl] = useState<string>("");
+  const audioRef = useRef<HTMLAudioElement>(null);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      if (bgmUrl) {
+        audioRef.current.play().catch(() => {}); // URL 있으면 재생
+      } else {
+        audioRef.current.pause(); // URL 없으면 멈춤
+      }
+    }
+  }, [bgmUrl]);
   const handleSelectTrack = (track: Track) => {
     setCurrentTrack(track);
     setCurrentPage("gps");
@@ -21,6 +32,8 @@ const MainScreen = () => {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-transparent">
+      <audio ref={audioRef} src={bgmUrl} loop />
+
       <AnimatePresence mode="wait">
         {currentPage === "gps" ? (
           <motion.div
@@ -44,7 +57,7 @@ const MainScreen = () => {
             className="absolute inset-0 z-50"
           >
             <SearchPage
-              onSelectTrack={handleSelectTrack}
+              onPlayMusic={(url) => setBgmUrl(url)}
               onBack={() => setCurrentPage("gps")}
             />
           </motion.div>
