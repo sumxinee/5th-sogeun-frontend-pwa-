@@ -281,241 +281,6 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
   const centeredPath =
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
-  // ------------------- [API 1: SSE 연결 (데이터 수신)] -------------------
-  /*useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    console.log("1. SSE useEffect 진입 완료. 토큰:", token);
-
-    if (!token || token === "null" || token === "undefined") {
-      console.log("2. 토큰이 없어서 종료합니다.");
-      return;
-    }
-    console.log("3. 현재 위치 상태:", myLocation);
-    if (!myLocation) {
-      console.log("4. 위치 정보가 아직 없어서 기다립니다.");
-      return;
-    }
-
-    const BASE_URL =
-      "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=1&lat=${myLocation.lat}&lon=${myLocation.lng}`;
-
-    console.log("실제 전송 URL:", sseEndpoint);
-
-    const eventSource = new EventSourcePolyfill(sseEndpoint, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      withCredentials: true,
-      heartbeatTimeout: 60 * 60 * 1000,
-    });
-    console.log("실제 토큰 값:", token);
-    console.log("전송 URL 확인:", sseEndpoint);
-    eventSource.onopen = () => console.log("SSE Connected!");
-
-    eventSource.onmessage = (event) => {
-      try {
-        const parsedData = JSON.parse(event.data);
-        setServerUsers(parsedData);
-      } catch (error) {
-        console.error("SSE Data Parse Error:", error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error("SSE Error:", error);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [localStorage.getItem("accessToken")]); // 2. 토큰 값이 변경될 때마다 다시 시도하도록 설정 // 의존성 배열에 필요시 token을 추가할 수 있습니다.
-
-  // ------------------- [API 2: 내 위치 추적 및 서버 전송] -------------------
-  useEffect(() => {
-    if (!("geolocation" in navigator)) return;
-
-    const BASE_URL =
-      "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-    const userId = 1; // SSE와 동일하게 유지하세요.
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setMyLocation({ lat: latitude, lng: longitude });
-
-        // [핵심 수정] 위치가 바뀔 때마다 최신 토큰을 새로 가져옵니다.
-        const token = localStorage.getItem("accessToken");
-
-        // 토큰이 잘 가져와지는지 확인하기 위한 로그 (배포 후 확인용)
-        console.log("현재 전송 시도 토큰:", token);
-
-        // URL 파라미터 방식 유지 (Body는 비웁니다)
-        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude}&lon=${longitude}`;
-
-        fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
-          .then(async (res) => {
-            if (!res.ok) {
-              const errorText = await res.text();
-              console.error(`업데이트 실패 (${res.status}):`, errorText);
-            } else {
-              console.log("위치 업데이트 성공!");
-            }
-          })
-          .catch((err) => console.error("위치 전송 네트워크 실패:", err));
-      },
-      (error) => console.error("위치 추적 오류:", error),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);*/
-
-  /* const BASE_URL =
-    "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
-  const userId = 1; // 테스트용 아이디
-
-  // ------------------- [기능 1: 실시간 주변 유저 수신 (Nearby - SSE)] -------------------
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-
-    // TypeScript null 체크 가드
-    if (
-      !token ||
-      !myLocation ||
-      myLocation.lat === undefined ||
-      myLocation.lng === undefined
-    ) {
-      return;
-    }
-
-    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${userId}&lat=${myLocation.lat}&lon=${myLocation.lng}`;
-    const ctrl = new AbortController();
-
-    const connectSSE = async () => {
-      try {
-        await fetchEventSource(sseEndpoint, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "text/event-stream",
-            "Cache-Control": "no-cache",
-          },
-          signal: ctrl.signal,
-          async onopen(res) {
-            if (res.ok) console.log("🚀 SSE 연결 성공!");
-            else console.error("SSE 연결 실패:", res.status);
-          },
-          onmessage(event) {
-            if (event.data && event.data !== "heartbeat") {
-              try {
-                const parsedData = JSON.parse(event.data);
-                setServerUsers(parsedData);
-              } catch (e) {
-                console.error("데이터 파싱 실패:", e);
-              }
-            }
-          },
-          onerror(err) {
-            console.error("SSE 에러:", err);
-            ctrl.abort();
-          },
-        });
-      } catch (err) {
-        if (!ctrl.signal.aborted) console.log("SSE 중단");
-      }
-    };
-
-    connectSSE();
-    return () => ctrl.abort();
-  }, [myLocation?.lat, myLocation?.lng]); // 위치가 바뀔 때마다 주변 정보 다시 구독
-
-  // ------------------- [기능 2: 내 위치 서버에 전송 (Update - POST)] -------------------
-  useEffect(() => {
-    if (!("geolocation" in navigator)) return;
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setMyLocation({ lat: latitude, lng: longitude });
-
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
-        // 소수점 6자리로 고정하여 서버 부담을 줄이고 정확도 유지
-        const url = `${BASE_URL}/sse/location/update?userId=${userId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
-
-        fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "text/event-stream",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/json",
-          },
-        })
-          .then(async (res) => {
-            if (res.ok) console.log("📍 위치 업데이트 성공!");
-            else {
-              const txt = await res.text();
-              console.error(`업데이트 실패 (${res.status}):`, txt);
-            }
-          })
-          .catch((err) => console.error("네트워크 에러:", err));
-      },
-      (error) => console.error("위치 추적 오류:", error),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
-
-  // ------------------- [Logic: 유저 위치 계산 및 렌더링 업데이트] -------------------
-  // 내 위치나 서버 유저 데이터가 바뀔 때마다 레이더 상의 위치(angle, radius)를 다시 계산
-  useEffect(() => {
-    if (!myLocation) return;
-
-    const updatedUsers = serverUsers.map((user) => {
-      // 1. 위도/경도 차이 계산
-      const dy = user.latitude - myLocation.lat;
-      const dx = user.longitude - myLocation.lng;
-
-      // 2. 각도 계산 (Radar 상의 위치)
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-      // 3. 거리 계산 (미터 단위, 대략적)
-      const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000; // 위도 1도 ≈ 111km
-
-      // 4. 레이더 UI용 반지름(radius) 변환 (최대 140px로 제한)
-      const uiRadius = Math.min(rawDistMeters * 2, 140); // 스케일 조정 필요 시 곱하는 수 변경
-
-      return {
-        id: user.id,
-        name: user.nickname,
-        song: user.musicName,
-        artist: user.artistName,
-        lat: user.latitude,
-        lng: user.longitude,
-        artworkUrl: user.artworkUrl,
-        previewUrl: user.previewUrl,
-        angle: angle,
-        radius: uiRadius,
-        distance: `${Math.floor(rawDistMeters)}m`,
-      };
-    });
-
-    setNearbyUsers(updatedUsers);
-  }, [myLocation, serverUsers]);
-*/
-  // ------------------- [기능 1: 실시간 주변 유저 수신 (SSE)] -------------------
-
   useEffect(() => {
     // 토큰이나 위치가 없으면 연결하지 않음
     if (!token || !myLocation || !myUserId) {
@@ -611,7 +376,7 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
   }, [token, myUserId]); // 토큰이 있을 때만 watch 시작
 
   // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
-  useEffect(() => {
+  /* useEffect(() => {
     // 1. 레이더에 항상 띄울 목데이터 정의
     const mockUser: DetectedUser = {
       id: 999,
@@ -681,7 +446,37 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+  }, []);*/
+  // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
+  useEffect(() => {
+    // 1. [수정] 목데이터를 생성하던 변수를 삭제하거나 무시합니다.
+
+    // 2. 서버 데이터 변환 로직 (실제 유저들만 계산)
+    const updatedUsers = serverUsers.map((user) => {
+      const dy = user.latitude - (myLocation?.lat || 0);
+      const dx = user.longitude - (myLocation?.lng || 0);
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000;
+      const uiRadius = Math.min(rawDistMeters * 2, 140);
+
+      return {
+        id: user.id,
+        name: user.nickname,
+        song: user.musicName,
+        artist: user.artistName,
+        lat: user.latitude,
+        lng: user.longitude,
+        artworkUrl: user.artworkUrl,
+        previewUrl: user.previewUrl,
+        angle: angle,
+        radius: uiRadius,
+        distance: `${Math.floor(rawDistMeters)}m`,
+      };
+    });
+
+    // 3. [핵심] 이제 mockUser 없이 서버에서 온 데이터(updatedUsers)만 세팅합니다.
+    setNearbyUsers(updatedUsers);
+  }, [myLocation, serverUsers]);
 
   // ------------------- [Effect: Audio Playback] -------------------
   useEffect(() => {
