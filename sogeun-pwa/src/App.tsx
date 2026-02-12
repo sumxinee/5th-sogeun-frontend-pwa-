@@ -12,13 +12,12 @@ import type { Track } from "./pages/SearchPage";
 
 const MainScreen = () => {
   // 1. 오디오 객체를 담을 ref가 부모에 있어야 합니다.
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentPage, setCurrentPage] = useState<"gps" | "search">("gps");
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-
   const [bgmUrl, setBgmUrl] = useState<string>("");
-  // 주변 사람 노래를 들을 때 원래 노래를 기억해둘 공간
   const [originalBgmUrl, setOriginalBgmUrl] = useState<string>("");
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -74,7 +73,6 @@ const MainScreen = () => {
               onPlusClick={() => setCurrentPage("search")}
               currentTrack={currentTrack}
               onSelectTrack={handleSelectTrack}
-              // 주변 사람 노래 틀 때는 URL을, 닫을 때는 빈 값을 넣도록 GPS를 수정해야 함
               onPlayPeopleMusic={handlePlayPeopleMusic}
               onTogglePlay={handleTogglePlay}
             />
@@ -90,9 +88,8 @@ const MainScreen = () => {
             <SearchPage
               onPlayMusic={(url) => {
                 setBgmUrl(url);
-                // SearchPage에서 재생하는 건 '미리듣기' 성격이 강하므로
-                // originalBgmUrl은 바꾸지 않고 bgmUrl만 바꿉니다.
               }}
+              onSelectTrack={handleSelectTrack} // ✅ 박스 클릭 시 실행될 함수 전달
               onBack={() => setCurrentPage("gps")}
             />
           </motion.div>
