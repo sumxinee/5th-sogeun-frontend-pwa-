@@ -123,13 +123,14 @@ export default function ProfilePage() {
         style={{
           width: "100%",
           paddingLeft: "24px",
-          marginBottom: "20px",
+          marginTop: "-10px",
+          marginBottom: "15px",
           alignSelf: "flex-start",
         }}
       >
         <h1
           style={{
-            fontSize: "20px",
+            fontSize: "18px",
             fontWeight: "900",
             color: "#333333",
             margin: 0,
@@ -141,7 +142,7 @@ export default function ProfilePage() {
       </div>
 
       {/* 2. 프로필 이미지 & 레벨 뱃지 */}
-      <div style={{ position: "relative", marginBottom: "16px" }}>
+      <div style={{ position: "relative", marginBottom: "13px" }}>
         <div
           style={{
             width: "180px",
@@ -176,9 +177,9 @@ export default function ProfilePage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "white",
-            fontWeight: "800",
-            fontSize: "20px",
+            color: "black",
+            fontWeight: "700",
+            fontSize: "18px",
             border: "3px solid rgba(255,255,255,0.9)",
             boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
           }}
@@ -202,11 +203,11 @@ export default function ProfilePage() {
             display: "flex",
             alignItems: "baseline",
             gap: "8px",
-            marginBottom: "4px",
+            marginBottom: "3px",
           }}
         >
           <span
-            style={{ fontSize: "22px", fontWeight: "900", color: "#333333" }}
+            style={{ fontSize: "20px", fontWeight: "900", color: "#333333" }}
           >
             {userData.nickname}
           </span>
@@ -233,7 +234,7 @@ export default function ProfilePage() {
           <span
             style={{
               fontSize: "14px",
-              fontWeight: "700",
+              fontWeight: "600",
               color: "rgba(255,255,255,0.9)",
               textShadow: "0 1px 2px rgba(0,0,0,0.1)",
             }}
@@ -249,20 +250,24 @@ export default function ProfilePage() {
           display: "flex",
           width: "90%",
           gap: "13px",
-          marginTop: "-7px",
-          marginBottom: "20px",
+          marginTop: "-14px",
+          marginBottom: "17px",
         }}
       >
         <button
           className="glass-btn"
           style={{
             flex: 1,
-            height: "40px",
-            fontSize: "15px",
+            height: "35px",
+            fontSize: "13px",
             fontWeight: "700",
             backgroundColor: "rgba(255, 255, 255, 0.35)",
-            borderRadius: "12px",
+            borderRadius: "10px",
             border: "1px solid rgba(255,255,255,0.4)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 0,
           }}
           onClick={() => navigate("/profile/edit")}
         >
@@ -272,12 +277,16 @@ export default function ProfilePage() {
           className="glass-btn"
           style={{
             flex: 1,
-            height: "40px",
-            fontSize: "15px",
+            height: "35px",
+            fontSize: "13px",
             fontWeight: "700",
             backgroundColor: "rgba(255, 255, 255, 0.35)",
-            borderRadius: "12px",
+            borderRadius: "10px",
             border: "1px solid rgba(255,255,255,0.4)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 0,
           }}
         >
           소근 통계
@@ -289,11 +298,11 @@ export default function ProfilePage() {
         className="level-card"
         style={{
           width: "90%",
-          padding: "20px",
+          padding: "14px",
           backgroundColor: "rgba(255, 255, 255, 0.35)",
-          borderRadius: "20px",
+          borderRadius: "13px",
           border: "1px solid rgba(255,255,255,0.4)",
-          marginBottom: "20px",
+          marginBottom: "14px",
         }}
       >
         <div
@@ -301,14 +310,14 @@ export default function ProfilePage() {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginBottom: "10px",
+            marginBottom: "7px",
             fontSize: "14px",
-            fontWeight: "700",
-            color: "#374151",
+            fontWeight: "600",
+            color: "#777777",
           }}
         >
           <span>레벨 {userData.level}</span>
-          <span style={{ color: "#6B7280" }}>
+          <span style={{ color: "#FFFFFF" }}>
             {userData.likesCurrent} / {userData.likesMax} likes
           </span>
         </div>
@@ -331,10 +340,10 @@ export default function ProfilePage() {
         <div
           className="level-footer"
           style={{
-            marginTop: "10px",
+            marginTop: "7px",
             fontSize: "12px",
             color: "white",
-            fontWeight: "600",
+            fontWeight: "500",
           }}
         >
           다음 레벨까지 {userData.likesMax - userData.likesCurrent} likes 남음
@@ -342,50 +351,34 @@ export default function ProfilePage() {
       </div>
 
       {/* 6. 좋아요 누른 노래 */}
-      <div style={{ width: "90%" }}>
-        <h3
-          style={{
-            fontSize: "16px",
-            fontWeight: "800",
-            color: "white",
-            marginBottom: "12px",
-            textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-          }}
-        >
-          좋아요 누른 노래
-        </h3>
-        <div
-          className="song-list-row"
-          style={{
-            display: "flex",
-            gap: "12px",
-            overflowX: "auto",
-            paddingBottom: "10px",
-          }}
-        >
-          {userData.likedSongs.map((src, index) => (
-            <div
-              key={index}
-              style={{
-                flexShrink: 0,
-                width: "100px",
-                height: "100px",
-                borderRadius: "16px",
-                overflow: "hidden",
-                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-              }}
-            >
-              <img
-                src={src}
-                alt={`album-${index}`}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </div>
-          ))}
+      <div style={{ width: "100%" }}>
+        <div style={{ width: "90%", margin: "0 auto 12px auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: "700", color: "white", margin: 3, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
+            좋아요 누른 노래
+          </h3>
+          <span style={{ fontSize: "11px", fontWeight: "500", color: "white", margin: 3, cursor: "pointer", opacity: 0.9 }}>
+            더보기
+          </span>
+        </div>
+
+        {/* 앨범 리스트 컨테이너 */}
+        <div className="liked-songs-container">
+          
+          <div className="song-list-row">
+            {userData.likedSongs.map((src, index) => (
+              <div key={index} className="album-item">
+                <img src={src} alt={`album-${index}`} />
+              </div>
+            ))}
+          </div>
+
+          {/* 유리 바 */}
+          <div className="glass-bar"></div>
+          
         </div>
       </div>
 
-      {/* 7. 하단 내비게이션 (Fixed) */}
+      {/* 7. 하단 내비게이션 */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
         {/* 홈 버튼 */}
         <button
