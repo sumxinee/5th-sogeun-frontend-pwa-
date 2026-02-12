@@ -21,6 +21,7 @@ export interface Track {
 interface SearchPageProps {
   onBack: () => void;
   onPlayMusic: (url: string) => void;
+  onSelectTrack: (track: Track) => void;
 }
 
 // 슬라이드 애니메이션 설정
@@ -41,7 +42,11 @@ const slideVariants = {
   }),
 };
 
-const SearchPage: React.FC<SearchPageProps> = ({ onBack, onPlayMusic }) => {
+const SearchPage: React.FC<SearchPageProps> = ({
+  onBack,
+  onPlayMusic,
+  onSelectTrack,
+}) => {
   const [activeTab, setActiveTab] = useState<"search" | "likes">("search");
   const [direction, setDirection] = useState(0);
   const [query, setQuery] = useState("");
@@ -168,7 +173,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ onBack, onPlayMusic }) => {
 
   // [2] 박스 전체 클릭 시: 음악 재생 & GPS 화면으로 이동
   const handleBoxClick = (track: Track) => {
-    onPlayMusic(track.previewUrl); // 음악은 계속 나와야 하니까 재생 요청
+    onSelectTrack(track); // 음악은 계속 나와야 하니까 재생 요청
     const audioEl = document.querySelector("audio");
     if (audioEl) audioEl.volume = 0.2;
     onBack(); // 뒤로 가기
