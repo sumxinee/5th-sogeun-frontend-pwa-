@@ -23,6 +23,9 @@ interface GPSProps {
   onPlusClick: () => void;
   currentTrack: Track | null;
   onSelectTrack: (track: Track) => void;
+  // ✅ 부모로부터 전달받은 재생/복구 함수 추가
+  onPlayPeopleMusic: (url: string) => void;
+  onTogglePlay: (shouldPlay: boolean) => void;
 }
 
 // ------------------- [타입 정의] -------------------
@@ -172,43 +175,49 @@ const Icons = {
   ),
 };
 
-const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
+const GPS: React.FC<GPSProps> = ({
+  onPlusClick,
+  onSelectTrack,
+  onPlayPeopleMusic,
+  onTogglePlay,
+}) => {
   const navigate = useNavigate();
-  //const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
 
   const [isLiked, setIsLiked] = useState(false);
   const [isThumbUp, setIsThumbUp] = useState(false);
   const [currentTrack, setCurrentTrack] = useAtom(currentTrackAtom);
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
-
-  const togglePlay = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation(); // 클릭 시 다른 레이어로 이벤트가 퍼지는 것 방지
-    if (!audioRef.current) return;
+  // 1) 앨범 클릭 시 토글하는 함수
+  const toggleBottomSheetMusic = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!selectedUser) return;
 
     if (isPlaying) {
-      audioRef.current.pause();
+      onTogglePlay(false);
       setIsPlaying(false);
     } else {
-      // 멈춰있는 오디오를 다시 재생할 때 src가 비어있지 않은지 확인
-      /*if (audioRef.current.src) {
-        audioRef.current
-          .play()
-          .then(() => setIsPlaying(true))
-          .catch((err) => {
-            console.error("Playback failed:", err);
-            setIsPlaying(false);
-          });
-      }*/
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((err) => console.error("재생 실패:", err));
+      onTogglePlay(true);
+      setIsPlaying(true);
     }
   };
-  // 검색 결과가 바뀔 때마다 실행
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
+  // 2) 바텀시트 열고 닫을 때 관리하는 Effect
+  useEffect(() => {
+    if (selectedUser?.previewUrl) {
+      onPlayPeopleMusic(selectedUser.previewUrl);
+      setIsPlaying(true);
+    }
+
+    // 클린업: 시트가 닫힐 때(selectedUser가 null이 될 때) 실행
+    return () => {
+      // 클린업: 시트가 완전히 내려갈 때만 음악을 정지하고 소스를 비웁니다.
+      if (!selectedUser) {
+        onPlayPeopleMusic("");
+        setIsPlaying(false);
+      }
+    };
+  }, [selectedUser]);
 
   // 2. Jotai 상태 구독
   const [token, setToken] = useAtom(accessTokenAtom);
@@ -480,78 +489,27 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
 
   // ------------------- [Effect: Audio Playback] -------------------
   useEffect(() => {
-    let isComponentActive = true;
-    // 1. 기존 오디오 객체가 있다면 즉시 정지 및 소스 초기화
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-      audioRef.current.load();
-      audioRef.current = null;
-      setIsPlaying(false);
-    }
-
-    // 2. 바텀시트가 열려있고(selectedUser 존재) URL이 있을 때만 재생
+    // 바텀시트 유저가 선택되면 부모에게 노래 재생 요청
     if (selectedUser?.previewUrl) {
-      const audio = new Audio(selectedUser.previewUrl);
-      audio.loop = true;
-      audio.volume = 0.1;
-      audioRef.current = audio;
-
-      const playAudio = async () => {
-        try {
-          if (!isComponentActive) return;
-          await audio.play();
-          if (isComponentActive) setIsPlaying(true);
-        } catch (err) {
-          if (isComponentActive) setIsPlaying(false);
-          console.warn("자동 재생 차단됨. 사용자의 인터랙션이 필요합니다.");
-        }
-      };
-
-      audioRef.current = audio;
-      playAudio();
+      onPlayPeopleMusic(selectedUser.previewUrl);
+      setIsPlaying(true);
     }
 
-    // 3. [중요] 클린업 함수: 바텀시트가 닫힐 때(selectedUser -> null) 음악 정지
+    // [중요] 클린업 함수: 바텀시트가 닫힐 때(selectedUser가 null이 될 때)
+    // 빈 값을 보내서 원래 노래로 복구시킴
     return () => {
-      isComponentActive = false;
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-        audioRef.current.load();
-        audioRef.current = null;
+      if (!selectedUser) {
+        onPlayPeopleMusic("");
         setIsPlaying(false);
       }
     };
-  }, [selectedUser]); // selectedUser 상태를 감시함
-  // 검색에서 트랙을 선택했을 때(currentTrack) 음악 재생을 위한 Effect
-  useEffect(() => {
-    if (currentTrack?.previewUrl) {
-      // 기존 오디오 정지
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+  }, [selectedUser]);
 
-      const audio = new Audio(currentTrack.previewUrl);
-      audio.loop = true;
-      audio.volume = 0.2;
-      audioRef.current = audio;
-
-      audio
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
-    }
-  }, [currentTrack]);
   // ------------------- [Handle Drag - 수정됨] -------------------
   const handleDragEnd = (_: any, info: PanInfo) => {
     // 아래로 100px 이상 내리거나 빠르게 휘두르면 닫기
     if (info.offset.y > 100 || info.velocity.y > 500) {
       setSelectedUser(null);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      }
     }
   };
 
@@ -801,7 +759,6 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
         <AnimatePresence>
           {currentTrack && (
             <motion.div
-              onClick={togglePlay} // 위에서 수정한 함수 연결
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
@@ -958,6 +915,7 @@ const GPS: React.FC<GPSProps> = ({ onPlusClick, onSelectTrack }) => {
               {/* 앨범 정보 전체 */}
               <div className="flex flex-col items-center w-full px-4 mb-10">
                 <motion.div
+                  onClick={toggleBottomSheetMusic}
                   whileTap={{ scale: 1 }} // 클릭 효과도 제거하려면 1로 변경
                   className="flex flex-col items-center cursor-default" // cursor-pointer를 default로 변경
                 >
