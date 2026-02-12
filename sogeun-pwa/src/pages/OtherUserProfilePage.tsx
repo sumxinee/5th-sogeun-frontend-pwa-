@@ -6,16 +6,7 @@ import "../index.css";
 // ------------------- [아이콘 컴포넌트] -------------------
 const Icons = {
   Pin: () => (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
       <circle cx="12" cy="10" r="3"></circle>
     </svg>
@@ -26,65 +17,21 @@ const Icons = {
     </svg>
   ),
   Home: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-7 w-7"
-      width="28"
-      height="28"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-      />
-    </svg>
-  ),
-  Plus: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-9 w-9 text-white"
-      width="36"
-      height="36"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="white"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={3}
-        d="M12 4v16m8-8H4"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
     </svg>
   ),
   Profile: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-7 w-7"
-      width="28"
-      height="28"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
     </svg>
   ),
 };
 
-export default function ProfilePage() {
+export default function OtherUserProfilePage() {
   const navigate = useNavigate();
 
-  // 더미 데이터
+  // 더미 데이터 (남의 정보)
   const userData = {
     handle: "music_cat",
     nickname: "음악듣는고양이",
@@ -92,9 +39,7 @@ export default function ProfilePage() {
     likesCurrent: 24,
     likesMax: 30,
     location: "123m 떨어져 있어요",
-    // 고해상도 고양이 이미지
-    profileImg:
-      "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    profileImg: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
     likedSongs: [
       "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=150",
       "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=150",
@@ -105,7 +50,6 @@ export default function ProfilePage() {
   const progressPercent = (userData.likesCurrent / userData.likesMax) * 100;
 
   return (
-    // 전체 배경을 감싸는 div
     <div
       className="clean-profile-bg"
       style={{
@@ -114,18 +58,20 @@ export default function ProfilePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        background:
-          "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
+        background: "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
+        minHeight: "100vh",
       }}
     >
-      {/* 1. 상단 핸들 */}
+      {/* 1. 상단 핸들 (뒤로가기 기능 추가 추천) */}
       <div
         style={{
           width: "100%",
           paddingLeft: "24px",
           marginTop: "-10px",
           marginBottom: "15px",
-          alignSelf: "flex-start",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px"
         }}
       >
         <h1
@@ -142,16 +88,8 @@ export default function ProfilePage() {
       </div>
 
       {/* 2. 프로필 이미지 & 레벨 뱃지 */}
-      <div style={{ position: "relative", marginBottom: "13px" }}>
-        <div
-          style={{
-            width: "180px",
-            height: "180px",
-            borderRadius: "50%",
-            border: "3px solid #FFFFFF",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-          }}
-        >
+      <div style={{ position: "relative", marginBottom: "1px" }}>
+        <div className="profile-image-container">
           <img
             src={userData.profileImg}
             alt="프로필"
@@ -165,25 +103,7 @@ export default function ProfilePage() {
         </div>
 
         {/* 레벨 뱃지 */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "10px",
-            right: "10px",
-            width: "50px",
-            height: "50px",
-            backgroundColor: "#4FD1C5",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "black",
-            fontWeight: "700",
-            fontSize: "18px",
-            border: "3px solid rgba(255,255,255,0.9)",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
-          }}
-        >
+        <div className="level-badge">
           {userData.level}
         </div>
       </div>
@@ -195,40 +115,20 @@ export default function ProfilePage() {
           flexDirection: "column",
           width: "100%",
           alignItems: "center",
-          marginBottom: "24px",
+          marginBottom: "20px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: "8px",
-            marginBottom: "3px",
-          }}
-        >
-          <span
-            style={{ fontSize: "20px", fontWeight: "900", color: "#333333" }}
-          >
+        <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "3px" }}>
+          <span style={{ fontSize: "20px", fontWeight: "900", color: "#333333" }}>
             {userData.nickname}
           </span>
-          <span
-            style={{ fontSize: "13px", color: "#666666", fontWeight: "500" }}
-          >
+          <span style={{ fontSize: "13px", color: "#666666", fontWeight: "500" }}>
             {userData.location}
           </span>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            marginTop: "3px",
-          }}
-        >
-          <span
-            style={{ color: "#FF005C", display: "flex", alignItems: "center" }}
-          >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "3px" }}>
+          <span style={{ color: "#FF005C", display: "flex", alignItems: "center" }}>
             <Icons.Play />
           </span>
           <span
@@ -242,55 +142,6 @@ export default function ProfilePage() {
             0+0 · 한로로
           </span>
         </div>
-      </div>
-
-      {/* 4. 액션 버튼들 */}
-      <div
-        style={{
-          display: "flex",
-          width: "90%",
-          gap: "13px",
-          marginTop: "-14px",
-          marginBottom: "17px",
-        }}
-      >
-        <button
-          className="glass-btn"
-          style={{
-            flex: 1,
-            height: "35px",
-            fontSize: "13px",
-            fontWeight: "700",
-            backgroundColor: "rgba(255, 255, 255, 0.35)",
-            borderRadius: "10px",
-            border: "1px solid rgba(255,255,255,0.4)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 0,
-          }}
-          onClick={() => navigate("/profile/edit")}
-        >
-          프로필 수정
-        </button>
-        <button
-          className="glass-btn"
-          style={{
-            flex: 1,
-            height: "35px",
-            fontSize: "13px",
-            fontWeight: "700",
-            backgroundColor: "rgba(255, 255, 255, 0.35)",
-            borderRadius: "10px",
-            border: "1px solid rgba(255,255,255,0.4)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 0,
-          }}
-        >
-          소근 통계
-        </button>
       </div>
 
       {/* 5. 레벨 카드 */}
@@ -320,6 +171,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
+
       {/* 6. 좋아요 누른 노래 */}
       <div style={{ width: "100%" }}>
         <div style={{ width: "90%", margin: "0 auto 12px auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -331,9 +183,7 @@ export default function ProfilePage() {
           </span>
         </div>
 
-        {/* 앨범 리스트 컨테이너 */}
         <div className="liked-songs-container">
-          
           <div className="song-list-row">
             {userData.likedSongs.map((src, index) => (
               <div key={index} className="album-item">
@@ -341,16 +191,12 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-
-          {/* 유리 바 */}
           <div className="glass-bar"></div>
-          
         </div>
       </div>
 
       {/* 7. 하단 내비게이션 */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
-        {/* 홈 버튼 */}
         <button
           onClick={() => navigate("/gps")}
           className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
@@ -359,7 +205,6 @@ export default function ProfilePage() {
           <span className="text-[10px] font-bold mt-1">홈</span>
         </button>
 
-        {/* 중앙 플러스 버튼 */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-6">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -367,25 +212,17 @@ export default function ProfilePage() {
             className="w-[64px] h-[64px] bg-gradient-to-tr from-[#FFDEE9] to-[#B5FFFC] rounded-full flex items-center justify-center shadow-lg border-[4px] border-[#F0F4F8]"
             style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="white"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M12 4v16m8-8H4"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="white">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
             </svg>
           </motion.button>
         </div>
 
-        {/* 내 정보 버튼 */}
-        <button className="flex flex-col items-center text-[#FF4B6E]">
+        {/* 남의 프로필을 볼 때는 '나' 버튼이 활성화(분홍색)되지 않도록 text-gray-400으로 변경 */}
+        <button 
+          onClick={() => navigate("/profile")} 
+          className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
+        >
           <Icons.Profile />
           <span className="text-[10px] font-bold mt-1">나</span>
         </button>
