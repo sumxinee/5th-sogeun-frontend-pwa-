@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "../index.css";
+import musicPlanetIcon from "../assets/logo.png";
 
 // ------------------- [아이콘 컴포넌트] -------------------
 const Icons = {
@@ -103,6 +104,10 @@ export default function ProfilePage() {
   };
 
   const progressPercent = (userData.likesCurrent / userData.likesMax) * 100;
+
+  const handleSongClick = () => {
+  navigate("/profile/edit/song");
+};
 
   return (
     // 전체 배경을 감싸는 div
@@ -224,7 +229,9 @@ export default function ProfilePage() {
             alignItems: "center",
             gap: "6px",
             marginTop: "3px",
+            cursor: "pointer",
           }}
+          onClick={handleSongClick}
         >
           <span
             style={{ color: "#FF005C", display: "flex", alignItems: "center" }}
@@ -289,7 +296,7 @@ export default function ProfilePage() {
             padding: 0,
           }}
         >
-          소근 통계
+          소근한 노래
         </button>
       </div>
 
@@ -349,47 +356,40 @@ export default function ProfilePage() {
       </div>
 
       {/* 7. 하단 내비게이션 */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
-        {/* 홈 버튼 */}
-        <button
-          onClick={() => navigate("/gps")}
-          className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
-        >
-          <Icons.Home />
-          <span className="text-[10px] font-bold mt-1">홈</span>
-        </button>
+<div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
+  {/* 홈 버튼 */}
+  <button
+    onClick={() => navigate("/gps")}
+    className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
+  >
+    <Icons.Home />
+    <span className="text-[10px] font-bold mt-1">홈</span>
+  </button>
 
-        {/* 중앙 플러스 버튼 */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-6">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-[64px] h-[64px] bg-gradient-to-tr from-[#FFDEE9] to-[#B5FFFC] rounded-full flex items-center justify-center shadow-lg border-[4px] border-[#F0F4F8]"
-            style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="white"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-          </motion.button>
-        </div>
+  {/* 중앙 버튼 */}
+  <div className="absolute left-1/2 -translate-x-1/2 -top-14"> 
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      // 기존 배경색(bg-gradient...)과 테두리(border...) 제거 -> 투명 배경
+      className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
+      // onClick={() => ... } // 클릭 시 이동할 페이지가 있다면 여기에 추가
+    >
+      <img
+        src={musicPlanetIcon} 
+        alt="Music Planet"
+        // 이미지에 드롭 섀도우를 줘서 입체감 추가
+        className="w-full h-full object-contain drop-shadow-xl" 
+      />
+    </motion.button>
+  </div>
 
-        {/* 내 정보 버튼 */}
-        <button className="flex flex-col items-center text-[#FF4B6E]">
-          <Icons.Profile />
-          <span className="text-[10px] font-bold mt-1">나</span>
-        </button>
-      </div>
-    </div>
-  );
+  {/* 내 정보 버튼 */}
+  <button className="flex flex-col items-center text-[#FF4B6E]">
+    <Icons.Profile />
+    <span className="text-[10px] font-bold mt-1">나</span>
+  </button>
+  </div>
+</div>
+);
 }
