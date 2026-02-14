@@ -1,13 +1,14 @@
 /* eslint-disable */
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import { useAtom, useAtomValue } from "jotai"; // 1. Jotai 추가
+import { useAtom } from "jotai"; // 1. Jotai 추가
 import { accessTokenAtom, userIdAtom } from "../store/auth"; // 토큰 아톰
 import { locationAtom } from "../store/location"; // 기존에 있던 위치 아톰 활용
 import { currentTrackAtom, isPlayingAtom } from "../store/music";
 import type { Track } from "./SearchPage";
+import musicPlanetIcon from "../assets/logo.png";
 interface ServerUserData {
   id: number;
   nickname: string;
@@ -23,7 +24,7 @@ interface GPSProps {
   onPlusClick: () => void;
   currentTrack: Track | null;
   onSelectTrack: (track: Track) => void;
-  // ✅ 부모로부터 전달받은 재생/복구 함수 추가
+  //부모로부터 전달받은 재생/복구 함수 추가
   onPlayPeopleMusic: (url: string) => void;
   onTogglePlay: (shouldPlay: boolean) => void;
 }
@@ -186,38 +187,10 @@ const GPS: React.FC<GPSProps> = ({
 
   const [isLiked, setIsLiked] = useState(false);
   const [isThumbUp, setIsThumbUp] = useState(false);
-  const [currentTrack, setCurrentTrack] = useAtom(currentTrackAtom);
+  const [currentTrack] = useAtom(currentTrackAtom);
+  console.log("현재 트랙 데이터:", currentTrack);
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
-  // 1) 앨범 클릭 시 토글하는 함수
-  const toggleBottomSheetMusic = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!selectedUser) return;
-
-    if (isPlaying) {
-      onTogglePlay(false);
-      setIsPlaying(false);
-    } else {
-      onTogglePlay(true);
-      setIsPlaying(true);
-    }
-  };
-
-  // 2) 바텀시트 열고 닫을 때 관리하는 Effect
-  useEffect(() => {
-    if (selectedUser?.previewUrl) {
-      onPlayPeopleMusic(selectedUser.previewUrl);
-      setIsPlaying(true);
-    }
-
-    // 클린업: 시트가 닫힐 때(selectedUser가 null이 될 때) 실행
-    return () => {
-      // 클린업: 시트가 완전히 내려갈 때만 음악을 정지하고 소스를 비웁니다.
-      if (!selectedUser) {
-        onPlayPeopleMusic("");
-        setIsPlaying(false);
-      }
-    };
-  }, [selectedUser]);
+  const [isUserMusicPlaying, setIsUserMusicPlaying] = useState(false);
 
   // 2. Jotai 상태 구독
   const [token, setToken] = useAtom(accessTokenAtom);
@@ -228,6 +201,14 @@ const GPS: React.FC<GPSProps> = ({
   const BASE_URL =
     "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
 
+  const toggleBottomSheetMusic = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!selectedUser) return;
+
+    const nextState = !isUserMusicPlaying;
+    onTogglePlay(nextState); // 실제 오디오 재생/정지
+    setIsUserMusicPlaying(nextState); // 이퀄라이저 표시 제어
+  };
   // ------------------- [배경 및 HUD 초기 설정] -------------------
   // 2. 배경 파티클
   const [particles] = useState<Particle[]>(() =>
@@ -492,18 +473,16 @@ const GPS: React.FC<GPSProps> = ({
     // 바텀시트 유저가 선택되면 부모에게 노래 재생 요청
     if (selectedUser?.previewUrl) {
       onPlayPeopleMusic(selectedUser.previewUrl);
-      setIsPlaying(true);
+      setIsUserMusicPlaying(true);
     }
 
     // [중요] 클린업 함수: 바텀시트가 닫힐 때(selectedUser가 null이 될 때)
     // 빈 값을 보내서 원래 노래로 복구시킴
     return () => {
-      if (!selectedUser) {
-        onPlayPeopleMusic("");
-        setIsPlaying(false);
-      }
+      onPlayPeopleMusic(""); // 빈 주소를 보내 오디오 정지
+      setIsUserMusicPlaying(false);
     };
-  }, [selectedUser]);
+  }, [selectedUser, onPlayPeopleMusic]);
 
   // ------------------- [Handle Drag - 수정됨] -------------------
   const handleDragEnd = (_: any, info: PanInfo) => {
@@ -759,11 +738,15 @@ const GPS: React.FC<GPSProps> = ({
         <AnimatePresence>
           {currentTrack && (
             <motion.div
+              key="now-playing"
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              //style={{ pointerEvents: "auto" }} // 인라인 스타일로 강제 부여
-              className="pointer-events-auto mx-auto mb-70 bg-white/20 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[180px] cursor-pointer z-[999] relative"
+              style={{ pointerEvents: "auto" }} // 인라인 스타일로 강제 부여
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              //className="pointer-events-auto mx-auto bottom-full mb-4 bg-white/20 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[180px] cursor-pointer z-[999] relative"
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-white/20 backdrop-blur-xl border border-white/30 p-2.5 rounded-[22px] shadow-lg flex items-center gap-3 w-[200px] cursor-pointer z-[999]"
+              onClick={() => setIsPlaying(!isPlaying)}
             >
               <div className="relative w-10 h-10 rounded-xl bg-white/20 overflow-hidden flex-shrink-0">
                 <img
@@ -771,7 +754,7 @@ const GPS: React.FC<GPSProps> = ({
                   className="w-full h-full object-cover"
                   alt="art"
                 />
-                {/* ✅ 재생 중일 때만 이미지 위에 작은 막대기 애니메이션 표시 */}
+                {/* 재생 중일 때만 이미지 위에 작은 막대기 애니메이션 표시 */}
                 {isPlaying && (
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-0.5 px-1">
                     {[1, 2, 3].map((_, i) => (
@@ -805,39 +788,31 @@ const GPS: React.FC<GPSProps> = ({
         </AnimatePresence>
 
         {/* [Nav Bar] ProfilePage의 구조와 100% 동일하게 구현 */}
-        <div className="pointer-events-auto w-full h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl relative">
-          {/* 홈 버튼 (GPS 페이지가 '홈'이므로 활성화 색상 적용) */}
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
+          {/* 홈 버튼 */}
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/gps")}
             className="flex flex-col items-center text-[#FF4B6E]"
           >
             <Icons.Home />
             <span className="text-[10px] font-bold mt-1">홈</span>
           </button>
 
-          {/* 중앙 플러스 버튼 (ProfilePage와 동일한 그라데이션 및 위치) */}
-          <div className="absolute left-1/2 -translate-x-1/2 -top-6">
+          {/* 중앙 버튼 */}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-14">
             <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={onPlusClick}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-[64px] h-[64px] bg-gradient-to-tr from-[#FFDEE9] to-[#B5FFFC] rounded-full flex items-center justify-center shadow-lg border-[4px] border-[#F0F4F8]"
-              style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}
+              className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
+              // onClick={() => ... } // 클릭 시 이동할 페이지가 있다면 여기에 추가
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="white"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={3}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <img
+                src={musicPlanetIcon}
+                alt="Music Planet"
+                // 이미지에 드롭 섀도우를 줘서 입체감 추가
+                className="w-full h-full object-contain drop-shadow-xl"
+              />
             </motion.button>
           </div>
 
@@ -851,6 +826,7 @@ const GPS: React.FC<GPSProps> = ({
           </button>
         </div>
       </div>
+
       {/* 7. 바텀시트 모달 (디자인 유지) */}
 
       <AnimatePresence>
@@ -874,7 +850,7 @@ const GPS: React.FC<GPSProps> = ({
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              //transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[#F3F7FF]/80 rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl"
             >
               {/* 상단 헤더: 민트색 확인 버튼 */}
@@ -905,7 +881,7 @@ const GPS: React.FC<GPSProps> = ({
                   )}
                 </div>
                 <h2 className="text-[18px] font-black text-black mb-1">
-                  {selectedUser.name} {/* [해결] '사용자' 대신 변수 사용 */}
+                  {selectedUser.name}
                 </h2>
                 <p className="text-[14px] text-gray-400 font-medium">
                   {selectedUser.distance} 떨어져 있어요
@@ -916,8 +892,8 @@ const GPS: React.FC<GPSProps> = ({
               <div className="flex flex-col items-center w-full px-4 mb-10">
                 <motion.div
                   onClick={toggleBottomSheetMusic}
-                  whileTap={{ scale: 1 }} // 클릭 효과도 제거하려면 1로 변경
-                  className="flex flex-col items-center cursor-default" // cursor-pointer를 default로 변경
+                  whileTap={{ scale: 0.98 }} // 클릭 효과도 제거하려면 1로 변경
+                  className="flex flex-col items-center cursor-pointer"
                 >
                   {/* 앨범 아트 박스 */}
                   <div className="relative w-60 h-60 rounded-[32px] overflow-hidden shadow-2xl mb-8">
@@ -928,17 +904,21 @@ const GPS: React.FC<GPSProps> = ({
                       alt="Album Art"
                     />
 
-                    {/* 30% 검정색 필터 (재생 중일 때만 더 어둡게 처리하면 예뻐요) */}
+                    {/* 30% 검정색 필터 */}
                     <div
                       className={`absolute inset-0 bg-black/30 z-10 transition-opacity ${isPlaying ? "opacity-100" : "opacity-0"}`}
                     />
 
                     {/* 비주얼라이저 (재생 중일 때만 보임) */}
-                    {isPlaying && (
-                      <>
-                        <div className="absolute inset-0 bg-black/30" />{" "}
-                        {/* 어둡게 만들기 */}
-                        <div className="absolute inset-0 flex items-center justify-center gap-3">
+                    <AnimatePresence>
+                      {isUserMusicPlaying && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 bg-black/30 z-10 flex items-center justify-center gap-3"
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center gap-3" />
                           {[1, 2, 3, 4, 3, 2, 1].map((_, i) => (
                             <motion.div
                               key={i}
@@ -951,11 +931,10 @@ const GPS: React.FC<GPSProps> = ({
                               className="w-3 bg-white/70 rounded-full"
                             />
                           ))}
-                        </div>
-                      </>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-
                   {/* 노래 정보 텍스트 */}
                   <div className="text-center">
                     <h3 className="text-[22px] font-black text-black mb-1 leading-tight">
@@ -981,10 +960,7 @@ const GPS: React.FC<GPSProps> = ({
                       width="32"
                       height="32"
                       viewBox="0 0 24 24"
-                      /* isLiked가 false일 때는 회색(#D1D5DB), 
-          true일 때는 핫핑크(#FF4B91)로 채워짐 
-        */
-                      fill={isLiked ? "#FF4B91" : "#D1D5DB"}
+                      fill={isLiked ? "#FF4B91" : "#8b8c8f"}
                       className="transition-colors duration-300"
                     >
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -1001,10 +977,7 @@ const GPS: React.FC<GPSProps> = ({
                       width="32"
                       height="32"
                       viewBox="0 0 24 24"
-                      /* isThumbUp이 false일 때는 회색(#D1D5DB), 
-          true일 때는 민트색(#4FD1C5)으로 채워짐 
-        */
-                      fill={isThumbUp ? "#4FD1C5" : "#D1D5DB"}
+                      fill={isThumbUp ? "#4FD1C5" : "#8b8c8f"}
                       className="transition-colors duration-300"
                     >
                       <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
