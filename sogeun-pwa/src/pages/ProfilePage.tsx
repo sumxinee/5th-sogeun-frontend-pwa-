@@ -106,8 +106,8 @@ export default function ProfilePage() {
   const progressPercent = (userData.likesCurrent / userData.likesMax) * 100;
 
   const handleSongClick = () => {
-  navigate("/profile/edit/song");
-};
+    navigate("/profile/edit/song");
+  };
 
   return (
     // 전체 배경을 감싸는 div
@@ -315,8 +315,8 @@ export default function ProfilePage() {
           {/* 진행 바 채우기 (여기가 반짝이는 부분!) */}
           <div
             className="shiny-bar"
-            style={{ 
-              width: `${progressPercent}%` 
+            style={{
+              width: `${progressPercent}%`,
             }}
           ></div>
         </div>
@@ -329,18 +329,42 @@ export default function ProfilePage() {
 
       {/* 6. 좋아요 누른 노래 */}
       <div style={{ width: "100%" }}>
-        <div style={{ width: "90%", margin: "0 auto 12px auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ fontSize: "14px", fontWeight: "700", color: "white", margin: 3, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
+        <div
+          style={{
+            width: "90%",
+            margin: "0 auto 12px auto",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "14px",
+              fontWeight: "700",
+              color: "white",
+              margin: 3,
+              textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+            }}
+          >
             좋아요 누른 노래
           </h3>
-          <span style={{ fontSize: "11px", fontWeight: "500", color: "white", margin: 3, cursor: "pointer", opacity: 0.9 }}>
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: "500",
+              color: "white",
+              margin: 3,
+              cursor: "pointer",
+              opacity: 0.9,
+            }}
+          >
             더보기
           </span>
         </div>
 
         {/* 앨범 리스트 컨테이너 */}
         <div className="liked-songs-container">
-          
           <div className="song-list-row">
             {userData.likedSongs.map((src, index) => (
               <div key={index} className="album-item">
@@ -351,45 +375,44 @@ export default function ProfilePage() {
 
           {/* 유리 바 */}
           <div className="glass-bar"></div>
-          
         </div>
       </div>
 
       {/* 7. 하단 내비게이션 */}
-<div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
-  {/* 홈 버튼 */}
-  <button
-    onClick={() => navigate("/gps")}
-    className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
-  >
-    <Icons.Home />
-    <span className="text-[10px] font-bold mt-1">홈</span>
-  </button>
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
+        {/* 홈 버튼 */}
+        <button
+          onClick={() => navigate("/gps")}
+          className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
+        >
+          <Icons.Home />
+          <span className="text-[10px] font-bold mt-1">홈</span>
+        </button>
 
-  {/* 중앙 버튼 */}
-  <div className="absolute left-1/2 -translate-x-1/2 -top-14"> 
-    <motion.button
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      // 기존 배경색(bg-gradient...)과 테두리(border...) 제거 -> 투명 배경
-      className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
-      // onClick={() => ... } // 클릭 시 이동할 페이지가 있다면 여기에 추가
-    >
-      <img
-        src={musicPlanetIcon} 
-        alt="Music Planet"
-        // 이미지에 드롭 섀도우를 줘서 입체감 추가
-        className="w-full h-full object-contain drop-shadow-xl" 
-      />
-    </motion.button>
-  </div>
+        {/* 중앙 버튼 */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-14">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            // 기존 배경색(bg-gradient...)과 테두리(border...) 제거 -> 투명 배경
+            className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
+            // onClick={() => ... } // 클릭 시 이동할 페이지가 있다면 여기에 추가
+          >
+            <img
+              src={musicPlanetIcon}
+              alt="Music Planet"
+              // 이미지에 드롭 섀도우를 줘서 입체감 추가
+              className="w-full h-full object-contain drop-shadow-xl"
+            />
+          </motion.button>
+        </div>
 
-  {/* 내 정보 버튼 */}
-  <button className="flex flex-col items-center text-[#FF4B6E]">
-    <Icons.Profile />
-    <span className="text-[10px] font-bold mt-1">나</span>
-  </button>
-  </div>
-</div>
-);
+        {/* 내 정보 버튼 */}
+        <button className="flex flex-col items-center text-[#FF4B6E]">
+          <Icons.Profile />
+          <span className="text-[10px] font-bold mt-1">나</span>
+        </button>
+      </div>
+    </div>
+  );
 }
