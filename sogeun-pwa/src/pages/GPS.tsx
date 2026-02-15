@@ -175,10 +175,19 @@ const Icons = {
     </svg>
   ),
 };
-
+// 좋아요 개수에 따른 레벨 및 반경 설정 (이미지 기준)
+const LEVEL_CONFIG = [
+  { lv: 1, minLikes: 0, maxLikes: 2, radius: 50 },
+  { lv: 2, minLikes: 2, maxLikes: 5, radius: 100 },
+  { lv: 3, minLikes: 6, maxLikes: 10, radius: 150 },
+  { lv: 4, minLikes: 11, maxLikes: 15, radius: 200 },
+  { lv: 5, minLikes: 16, maxLikes: 20, radius: 250 },
+  { lv: 6, minLikes: 21, maxLikes: 30, radius: 300 },
+  { lv: 7, minLikes: 31, maxLikes: 40, radius: 350 },
+];
 const GPS: React.FC<GPSProps> = ({
   onPlusClick,
-  onSelectTrack,
+  //onSelectTrack,
   onPlayPeopleMusic,
   onTogglePlay,
 }) => {
@@ -209,6 +218,16 @@ const GPS: React.FC<GPSProps> = ({
     onTogglePlay(nextState); // 실제 오디오 재생/정지
     setIsUserMusicPlaying(nextState); // 이퀄라이저 표시 제어
   };
+
+  const myTotalLikes = 35; // 실제로는 서버에서 받아온 내 좋아요 총 합계를 넣으세요.
+
+  const currentConfig =
+    LEVEL_CONFIG.find(
+      (c) => myTotalLikes >= c.minLikes && myTotalLikes <= c.maxLikes,
+    ) || LEVEL_CONFIG[6]; // 범위를 벗어나면 최고 레벨 적용
+
+  const currentMaxRadius = currentConfig.radius;
+  const currentLevel = currentConfig.lv;
   // ------------------- [배경 및 HUD 초기 설정] -------------------
   // 2. 배경 파티클
   const [particles] = useState<Particle[]>(() =>
@@ -390,7 +409,7 @@ const GPS: React.FC<GPSProps> = ({
       const dx = user.longitude - (myLocation?.lng || 0);
       const angle = Math.atan2(dy, dx) * (180 / Math.PI);
       const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000;
-      const uiRadius = Math.min(rawDistMeters * 2, 140);
+      const uiRadius = Math.min((rawDistMeters / currentMaxRadius) * 140, 140);
 
       return {
         id: user.id,
@@ -447,7 +466,7 @@ const GPS: React.FC<GPSProps> = ({
       const dx = user.longitude - (myLocation?.lng || 0);
       const angle = Math.atan2(dy, dx) * (180 / Math.PI);
       const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000;
-      const uiRadius = Math.min(rawDistMeters * 2, 140);
+      const uiRadius = Math.min((rawDistMeters / currentMaxRadius) * 140, 140);
 
       return {
         id: user.id,
@@ -539,7 +558,7 @@ const GPS: React.FC<GPSProps> = ({
           </p>
         </div>
         <div className="bg-pink-300/80 text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center shadow-lg h-fit">
-          <span className="mr-1">⚡</span> Lv.7
+          <span className="mr-1">⚡</span> Lv.{currentLevel}
         </div>
       </div>
       {/* 3. 메인 레이더 */}
@@ -689,7 +708,7 @@ const GPS: React.FC<GPSProps> = ({
       {/* 4. 반경 설정 */}
       <div className="flex justify-center z-10 mt-6 mb-6">
         <button className="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/40 text-[11px] font-black shadow-lg">
-          내 반경 350m
+          내 반경 {currentMaxRadius}m
         </button>
       </div>
       {/* 5. 사용자 리스트  */}
