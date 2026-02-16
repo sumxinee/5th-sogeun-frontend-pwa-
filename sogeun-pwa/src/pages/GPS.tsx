@@ -300,7 +300,11 @@ const GPS: React.FC<GPSProps> = ({
       });
       return;
     }
-
+    useEffect(() => {
+      console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
+      // 만약 여기서 값이 찍히는데 Jotai atom이 false라면 Jotai 설정 문제이고,
+      // 여기서도 null이 나온다면 저장(Login) 단계에서 문제가 생긴 것입니다.
+    }, []);
     const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${myUserId}&lat=${myLocation.lat}&lon=${myLocation.lng}`;
     const ctrl = new AbortController();
 
