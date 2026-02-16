@@ -10,6 +10,7 @@ import { userIdAtom } from "../store/auth";
 export default function AuthPage() {
   const navigate = useNavigate();
   const setAccessToken = useSetAtom(accessTokenAtom);
+  const setUserId = useSetAtom(userIdAtom);
 
   // true면 로그인 화면, false면 회원가입 화면
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -37,7 +38,6 @@ export default function AuthPage() {
     setNickname("");
     setErrorMessage(""); // 에러 메시지 초기화
   };
-  const setUserId = useSetAtom(userIdAtom);
   // 로그인 로직
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,18 +53,26 @@ export default function AuthPage() {
         loginId: id,
         password: pw,
       });
-
+      console.log("실제 서버 응답:", response.data);
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
 
         const { accessToken, userId } = response.data; // 서버 응답에 userId가 있다고 가정
 
-        if (accessToken && userId) {
+        if (accessToken) {
           setAccessToken(accessToken);
-          setUserId(userId); // 내 진짜 ID 저장
+
+          // 만약 userId가 응답에 없다면 임시값이나 id(로그인 시 입력한 값)를 활용할 수 있습니다.
+          if (userId) {
+            setUserId(userId);
+          } else {
+            // 서버에서 안 준다면 일단 넘어가거나, 필요하다면 다른 방식으로 저장
+            console.warn("서버 응답에 userId가 없습니다.");
+          }
+
+          alert("소근에 오신 것을 환영해요!");
+          navigate("/gps");
         }
-        alert("소근에 오신 것을 환영해요!");
-        navigate("/gps", { state: { userId: id } });
       }
     } catch (error: any) {
       console.error("로그인 에러:", error);
