@@ -57,18 +57,11 @@ export default function AuthPage() {
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
 
-        const { accessToken, userId } = response.data; // 서버 응답에 userId가 있다고 가정
+        const { accessToken } = response.data; // 서버 응답에 userId가 있다고 가정
 
         if (accessToken) {
           setAccessToken(accessToken);
-
-          // 만약 userId가 응답에 없다면 임시값이나 id(로그인 시 입력한 값)를 활용할 수 있습니다.
-          if (userId) {
-            setUserId(userId);
-          } else {
-            // 서버에서 안 준다면 일단 넘어가거나, 필요하다면 다른 방식으로 저장
-            console.warn("서버 응답에 userId가 없습니다.");
-          }
+          setUserId(id); // 서버에서 안 주니까, 로그인할 때 내가 입력한 'id'를 대신 저장
 
           alert("소근에 오신 것을 환영해요!");
           navigate("/gps");
