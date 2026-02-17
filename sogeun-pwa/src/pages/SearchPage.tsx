@@ -297,29 +297,29 @@ const SearchPage: React.FC<SearchPageProps> = ({
           </button>
 
           {/* 탭 전환 버튼 */}
-          <div className="bg-black/20 p-1 rounded-full flex items-center w-[180px] h-[44px] relative backdrop-blur-md border border-white/10">
+          <div className="bg-white p-1 rounded-full flex items-center w-[180px] h-[44px] relative backdrop-blur-md border border-white/10">
             <button
               onClick={() => handleTabChange("search")}
               className={`flex-1 h-full rounded-full text-[14px] font-bold z-10 transition-colors duration-200 
-                        ${activeTab === "search" ? "text-white" : "text-white/60"}`}
+                        ${activeTab === "search" ? "text-white" : "text-black/60"}`}
             >
               검색
             </button>
             <button
               onClick={() => handleTabChange("likes")}
               className={`flex-1 h-full rounded-full text-[14px] font-bold z-10 transition-colors duration-200 
-                        ${activeTab === "likes" ? "text-white" : "text-white/60"}`}
+                        ${activeTab === "likes" ? "text-white" : "text-black/60"}`}
             >
               좋아요
             </button>
 
             {/* 탭 슬라이더 */}
             <motion.div
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#FF6B6B] rounded-full shadow-md z-0"
+              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#e95e8c] rounded-full shadow-md z-0"
               animate={{
                 left: activeTab === "search" ? "4px" : "calc(50%)",
               }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           </div>
 
@@ -340,9 +340,9 @@ const SearchPage: React.FC<SearchPageProps> = ({
             className="flex-1 flex flex-col overflow-hidden px-6 w-full"
           >
             {/* 검색창 */}
-            <div className="flex items-center bg-white/20 h-[52px] rounded-[20px] px-5 border border-white/40 mb-6 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
+            <div className="flex items-center bg-white/50 h-[52px] rounded-[20px] px-5 border border-white/40 mb-6 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
               <input
-                className="bg-transparent flex-1 outline-none font-bold text-white placeholder:text-white/60 text-[15px]"
+                className="bg-transparent flex-1 outline-none font-medium text-[#333] placeholder:text-[#333]/60 text-[15px]"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch(true)}
@@ -350,7 +350,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
               />
               <button
                 onClick={() => handleSearch(true)}
-                className="text-white font-bold text-[14px] hover:text-[#FF6B6B] transition-colors"
+                className="text-[#FF4D4D] font-bold text-[14px] ml-2 active:scale-95 transition-transform"
               >
                 검색
               </button>
