@@ -290,17 +290,22 @@ const GPS: React.FC<GPSProps> = ({
   const centeredPath =
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
+  //----------------------------------------------------------
+  //---------------------------sse---------------------------
+
   useEffect(() => {
+    // 1. 숫자로 변환 (NaN 방지 및 백엔드 타입 일치)
+    const numericUserId = Number(myUserId);
     // 토큰이나 위치가 없으면 연결하지 않음
-    if (!token || !myLocation || !myUserId) {
+    if (!token || !myLocation || isNaN(numericUserId)) {
       console.log("⏳ SSE 대기 중: ", {
         token: !!token,
         location: !!myLocation,
-        userId: !!myUserId,
+        userId: !isNaN(numericUserId),
       });
       return;
     }
-    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${myUserId}&lat=${myLocation.lat}&lon=${myLocation.lng}`;
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${numericUserId}&lat=${myLocation.lat}&lon=${myLocation.lon}`;
     const ctrl = new AbortController();
 
     const connectSSE = async () => {
@@ -309,9 +314,8 @@ const GPS: React.FC<GPSProps> = ({
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`, // Jotai에서 가져온 토큰
-            //Accept: "text/event-stream",
+            UserId: String(numericUserId),
             Accept: "*/*",
-            //"Cache-Control": "no-cache",
           },
           signal: ctrl.signal,
           onopen: async (res) => {
@@ -343,7 +347,7 @@ const GPS: React.FC<GPSProps> = ({
 
     connectSSE();
     return () => ctrl.abort(); // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
-  }, [token, myLocation?.lat, myLocation?.lng]); // 3. 토큰과 위치를 의존성에 추가
+  }, [token, myLocation?.lat, myLocation?.lon]); // 3. 토큰과 위치를 의존성에 추가
 
   useEffect(() => {
     console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
@@ -359,20 +363,35 @@ const GPS: React.FC<GPSProps> = ({
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        const newPos = { lat: latitude, lng: longitude };
+        const newPos = { lat: latitude, lon: longitude };
 
         // 위치 상태 업데이트 (Jotai)
         setMyLocation(newPos);
+        const numericUserId = Number(myUserId);
         // 토큰이 없으면 전송하지 않음
-        if (token && myUserId) {
-          const url = `${BASE_URL}/sse/location/update?userId=${myUserId}&lat=${latitude.toFixed(6)}&lon=${longitude.toFixed(6)}`;
+        if (token && myUserId && !isNaN(numericUserId)) {
+          // 만약 숫자가 아니면(문자열 'yyyy' 등) 요청을 보내지 않음
+          if (isNaN(numericUserId)) {
+            console.error(
+              "❌ 유효하지 않은 userId입니다. 실제 숫자가 필요합니다:",
+              myUserId,
+            );
+            return;
+          }
+          // 2. URL 파라미터 구성 (userId만 포함하는 것이 가장 깔끔함)
+          const url = `${BASE_URL}/sse/location/update?userId=${numericUserId}`;
 
           fetch(url, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
+              UserId: String(numericUserId),
               "Content-Type": "application/json",
             },
+            body: JSON.stringify({
+              lat: latitude, // 숫자로 전달
+              lon: longitude, // 숫자로 전달
+            }),
           })
             .then((res) => {
               if (res.ok) console.log("📍 위치 업데이트 성공!");
@@ -409,7 +428,7 @@ const GPS: React.FC<GPSProps> = ({
     // 2. 서버 데이터 변환 로직 (기존 코드 유지)
     const updatedUsers = serverUsers.map((user) => {
       const dy = user.latitude - (myLocation?.lat || 0);
-      const dx = user.longitude - (myLocation?.lng || 0);
+      const dx = user.longitude - (myLocation?.lon || 0);
       const angle = Math.atan2(dy, dx) * (180 / Math.PI);
       const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000;
       const uiRadius = Math.min((rawDistMeters / currentMaxRadius) * 140, 140);
