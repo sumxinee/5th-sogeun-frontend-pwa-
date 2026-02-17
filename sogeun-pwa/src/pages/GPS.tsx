@@ -197,7 +197,7 @@ const GPS: React.FC<GPSProps> = ({
   const [isLiked, setIsLiked] = useState(false);
   const [isThumbUp, setIsThumbUp] = useState(false);
   const [currentTrack] = useAtom(currentTrackAtom);
-  console.log("현재 트랙 데이터:", currentTrack);
+  //console.log("현재 트랙 데이터:", currentTrack);
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
   const [isUserMusicPlaying, setIsUserMusicPlaying] = useState(false);
 
@@ -295,17 +295,17 @@ const GPS: React.FC<GPSProps> = ({
 
   useEffect(() => {
     // 1. 숫자로 변환 (NaN 방지 및 백엔드 타입 일치)
-    const numericUserId = Number(myUserId);
-    // 토큰이나 위치가 없으면 연결하지 않음
-    if (!token || !myLocation || isNaN(numericUserId)) {
-      console.log("⏳ SSE 대기 중: ", {
-        token: !!token,
-        location: !!myLocation,
-        userId: !isNaN(numericUserId),
-      });
+    const numericUserId = myUserId ? Number(myUserId) : 0;
+    console.log("변환된 숫자 ID:", numericUserId);
+    const isIdValid = !isNaN(numericUserId) && numericUserId !== 0;
+    const isLocationValid = !!(myLocation?.lat && myLocation?.lon);
+    const isTokenValid = !!token;
+
+    if (!isIdValid || !isTokenValid || !isLocationValid) {
+      console.log("⏳ SSE 대기 중...", { numericUserId, isLocationValid });
       return;
     }
-    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${numericUserId}&lat=${myLocation.lat}&lon=${myLocation.lon}`;
+    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${numericUserId}&lat=${myLocation!.lat}&lon=${myLocation!.lon}`;
     const ctrl = new AbortController();
 
     const connectSSE = async () => {
@@ -314,8 +314,7 @@ const GPS: React.FC<GPSProps> = ({
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`, // Jotai에서 가져온 토큰
-            UserId: String(numericUserId),
-            Accept: "*/*",
+            Accept: "text/event-stream",
           },
           signal: ctrl.signal,
           onopen: async (res) => {
@@ -329,9 +328,11 @@ const GPS: React.FC<GPSProps> = ({
           onmessage: (event) => {
             if (event.data && event.data !== "heartbeat") {
               try {
-                setServerUsers(JSON.parse(event.data));
+                const data = JSON.parse(event.data);
+                console.log("📥 서버 데이터 수신:", data);
+                setServerUsers(data);
               } catch (e) {
-                console.error("파싱 실패:", e);
+                console.error("파싱 실패:", e, "원본 데이터:", event.data);
               }
             }
           },

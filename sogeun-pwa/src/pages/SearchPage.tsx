@@ -284,8 +284,6 @@ const SearchPage: React.FC<SearchPageProps> = ({
       style={{ x: dragX, opacity: dragOpacity }}
       className="absolute inset-0 z-50 flex flex-col w-full min-h-screen pt-14 bg-transparent backdrop-blur-sm"
     >
-      <div className="absolute inset-0 bg-black/10 -z-10" />
-
       {/* 상단 헤더 & 토글 */}
       <div className="w-full flex flex-col items-center mb-4 px-6">
         <div className="w-full flex justify-between items-center mb-6">

@@ -57,12 +57,16 @@ export default function AuthPage() {
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
 
-        const { accessToken } = response.data; // 서버 응답에 userId가 있다고 가정
-
+        const { accessToken, userId } = response.data;
         if (accessToken) {
           setAccessToken(accessToken);
-          setUserId(id); // 서버에서 안 주니까, 로그인할 때 내가 입력한 'id'를 대신 저장
-
+          if (accessToken && userId) {
+            setAccessToken(accessToken);
+            setUserId(userId); // ✅ 서버가 준 '진짜 숫자'를 저장해야 배포 후에도 작동함
+            localStorage.setItem("userId", String(userId));
+          } else {
+            console.error("서버 응답에 userId가 없습니다. 백엔드 확인 필요!");
+          }
           alert("소근에 오신 것을 환영해요!");
           navigate("/gps");
         }
