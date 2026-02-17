@@ -300,11 +300,6 @@ const GPS: React.FC<GPSProps> = ({
       });
       return;
     }
-    useEffect(() => {
-      console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
-      // 만약 여기서 값이 찍히는데 Jotai atom이 false라면 Jotai 설정 문제이고,
-      // 여기서도 null이 나온다면 저장(Login) 단계에서 문제가 생긴 것입니다.
-    }, []);
     const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${myUserId}&lat=${myLocation.lat}&lon=${myLocation.lng}`;
     const ctrl = new AbortController();
 
@@ -349,6 +344,10 @@ const GPS: React.FC<GPSProps> = ({
     connectSSE();
     return () => ctrl.abort(); // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
   }, [token, myLocation?.lat, myLocation?.lng]); // 3. 토큰과 위치를 의존성에 추가
+
+  useEffect(() => {
+    console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
+  }, []);
 
   // ------------------- [기능 2: 내 위치 추적 및 서버 전송 (POST)] -------------------
   useEffect(() => {
