@@ -537,10 +537,13 @@ const GPS: React.FC<GPSProps> = ({
   // ------------------- [Render] -------------------
   return (
     <div
-      className="flex flex-col w-full max-w-md mx-auto min-h-screen font-sans relative overflow-hidden text-white"
+      className="relative w-full min-h-screen font-sans relative overflow-hidden text-white"
       style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         background:
-          "linear-gradient(135deg, #FBC2EB 0%, #A6C1EE 50%, #84FAB0 100%)",
+          "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
       }}
     >
       {/* 1. 배경 패턴 */}
@@ -549,7 +552,7 @@ const GPS: React.FC<GPSProps> = ({
         {particles.map((p) => (
           <motion.div
             key={p.id}
-            className="absolute bg-white rounded-full mix-blend-screen"
+            className="absolute bg-white rounded-full mix-blend-screen opacity-20"
             style={{
               top: p.top,
               left: p.left,
@@ -571,7 +574,7 @@ const GPS: React.FC<GPSProps> = ({
         ))}
       </div>
       {/* 2. 상단 헤더 */}
-      <div className="flex justify-between items-start pt-12 px-6 z-10">
+      <div className="w-full px-8 pt-16 z-10 flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-black tracking-tighter leading-none drop-shadow-md">
             소근
@@ -585,7 +588,7 @@ const GPS: React.FC<GPSProps> = ({
         </div>
       </div>
       {/* 3. 메인 레이더 */}
-      <div className="relative flex flex-col items-center justify-center w-full aspect-square mt-4 mb-4 z-10 px-6">
+      <div className="relative flex items-center justify-center w-full max-w-[300px] aspect-square my-6">
         {/* Waves */}
         {[0, 2.5, 5.0].map((delay) => (
           <motion.div
@@ -680,14 +683,24 @@ const GPS: React.FC<GPSProps> = ({
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/30 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl whitespace-nowrap z-20 pointer-events-none"
+              className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/30 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl whitespace-nowrap z-20 cursor-pointer"
             >
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-white drop-shadow-md flex items-center gap-1">
-                  {user.name} <span className="text-[8px]">☁️</span>
+                  {user.name}
+                  <span className="text-[8px]">☁️</span>
                 </span>
                 <span className="text-[8px] text-white/80 drop-shadow-sm">
-                  {user.song}
+                  <span
+                    style={{
+                      color: "#5ba0c5",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {" "}
+                    {user.song}
+                  </span>
                 </span>
               </div>
             </motion.div>
@@ -729,13 +742,28 @@ const GPS: React.FC<GPSProps> = ({
         </div>
       </div>
       {/* 4. 반경 설정 */}
-      <div className="flex justify-center z-10 mt-6 mb-6">
-        <button className="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/40 text-[11px] font-black shadow-lg">
-          내 반경 {currentMaxRadius}m
+      <div className="z-10 mb-10">
+        <button
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.2)",
+            backdropFilter: "blur(12px)",
+            padding: "7px 16px",
+            borderRadius: "99px",
+            fontSize: "9px",
+            fontWeight: "900",
+            color: "#ffffff",
+            boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
+            zIndex: 50, // 다른 요소에 가려지지 않게 높임
+          }}
+          className="active:scale-95 transition-transform"
+        >
+          내 반경
+          {/* 2. 숫자 부분 (기본 흰색 유지 혹은 강조) */}
+          <span style={{ color: "#FF7EB3" }}> {currentMaxRadius} </span> m
         </button>
       </div>
       {/* 5. 사용자 리스트  */}
-      <div className="flex-1 px-6 pb-32 z-10 overflow-y-auto space-y-4 scrollbar-hide">
+      <div className="w-full px-8 space-y-4 z-10 pb-44 scrollbar-hide">
         {nearbyUsers.map((user) => (
           <div
             key={user.id}
@@ -775,7 +803,7 @@ const GPS: React.FC<GPSProps> = ({
       </div>
       {/* 6. 하단 내비게이션 및 Now Playing 카드 (너비 및 위치 완전 수정) */}
 
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] z-[120]">
+      <div className="fixed bottom-0 left-0 w-full flex flex-col items-center z-[120] pointer-events-none pb-10">
         {/* [Now Playing] 하단바 바로 위에 위치하도록 배치 */}
         <AnimatePresence>
           {currentTrack && (
@@ -830,7 +858,7 @@ const GPS: React.FC<GPSProps> = ({
         </AnimatePresence>
 
         {/* [Nav Bar] ProfilePage의 구조와 100% 동일하게 구현 */}
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
+        <div className="pointer-events-auto w-[88%] h-[75px] bg-white/95 backdrop-blur-3xl rounded-[38px] flex justify-between items-center px-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] relative">
           {/* 홈 버튼 */}
           <button
             onClick={() => navigate("/gps")}
