@@ -9,6 +9,7 @@ import SearchPage from "./pages/SearchPage";
 import ProfileEditPage from "./pages/ProfileEditPage";
 import ProfilePage from "./pages/ProfilePage";
 import OtherUserProfilePage from "./pages/OtherUserProfilePage";
+import SogeunSongsPage from "./pages/SogeunSongsPage";
 import SongEditPage from "./pages/SongEditPage";
 import type { Track } from "./pages/SearchPage";
 
@@ -110,6 +111,7 @@ const App = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route path="/user/:id" element={<OtherUserProfilePage />} />
+        <Route path="/sogeun-songs" element={<SogeunSongsPage />} />
         <Route path="/profile/edit/song" element={<SongEditPage />} />
       </Routes>
     </BrowserRouter>
