@@ -379,39 +379,41 @@ export default function ProfilePage() {
       </div>
 
       {/* 7. 하단 내비게이션 */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[88%] h-[72px] bg-white/95 backdrop-blur-2xl rounded-[36px] flex justify-between items-center px-10 shadow-2xl z-[100]">
-        {/* 홈 버튼 */}
-        <button
-          onClick={() => navigate("/gps")}
-          className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
-        >
-          <Icons.Home />
-          <span className="text-[10px] font-bold mt-1">홈</span>
-        </button>
-
-        {/* 중앙 버튼 */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-14">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            // 기존 배경색(bg-gradient...)과 테두리(border...) 제거 -> 투명 배경
-            className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
-            // onClick={() => ... } // 클릭 시 이동할 페이지가 있다면 여기에 추가
+      <div className="fixed bottom-0 left-0 w-full flex flex-col items-center z-[120] pointer-events-none pb-10">
+        <div className="pointer-events-auto w-[88%] h-[75px] bg-white/95 backdrop-blur-3xl rounded-[38px] flex justify-between items-center px-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] relative">
+          {/* 홈 버튼 */}
+          <button
+            onClick={() => navigate("/gps")}
+            className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
           >
-            <img
-              src={musicPlanetIcon}
-              alt="Music Planet"
-              // 이미지에 드롭 섀도우를 줘서 입체감 추가
-              className="w-full h-full object-contain drop-shadow-xl"
-            />
-          </motion.button>
-        </div>
+            <Icons.Home />
+            <span className="text-[10px] font-bold mt-1">홈</span>
+          </button>
 
-        {/* 내 정보 버튼 */}
-        <button className="flex flex-col items-center text-[#FF4B6E]">
-          <Icons.Profile />
-          <span className="text-[10px] font-bold mt-1">나</span>
-        </button>
+          {/* 중앙 버튼 */}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-14">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              // 기존 배경색(bg-gradient...)과 테두리(border...) 제거 -> 투명 배경
+              className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
+              // onClick={() => ... } // 클릭 시 이동할 페이지가 있다면 여기에 추가
+            >
+              <img
+                src={musicPlanetIcon}
+                alt="Music Planet"
+                // 이미지에 드롭 섀도우를 줘서 입체감 추가
+                className="w-full h-full object-contain drop-shadow-xl"
+              />
+            </motion.button>
+          </div>
+
+          {/* 내 정보 버튼 */}
+          <button className="flex flex-col items-center text-[#FF4B6E]">
+            <Icons.Profile />
+            <span className="text-[10px] font-bold mt-1">나</span>
+          </button>
+        </div>
       </div>
     </div>
   );

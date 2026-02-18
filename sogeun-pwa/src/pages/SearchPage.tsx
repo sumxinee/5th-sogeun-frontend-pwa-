@@ -285,7 +285,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
       className="absolute inset-0 z-50 flex flex-col w-full min-h-screen pt-14 bg-transparent backdrop-blur-sm"
     >
       {/* 상단 헤더 & 토글 */}
-      <div className="w-full flex flex-col items-center mb-4 px-6">
+      <div className="w-full px-6 mb-4 relative flex items-center justify-center min-h-[56px]">
         <div className="w-full flex justify-between items-center mb-6">
           <button
             onClick={onBack}
@@ -342,7 +342,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
             {/* 검색창 */}
             <div className="flex items-center bg-white/50 h-[52px] rounded-[20px] px-5 border border-white/40 mb-6 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
               <input
-                className="bg-transparent flex-1 outline-none font-medium text-[#333] placeholder:text-[#333]/60 text-[15px]"
+                className="bg-transparent flex-1 outline-none font-medium text-[#8a8a8a] placeholder:text-[#333]/60 text-[15px]"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch(true)}
@@ -375,7 +375,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
                   </div>
                 </>
               ) : (
-                <div className="text-center mt-20 text-white/60 text-sm">
+                <div className="text-center pt-20 text-white/60 font-bold">
                   검색 결과가 여기에 표시됩니다.
                 </div>
               )}
