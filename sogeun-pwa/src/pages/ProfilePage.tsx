@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import SearchPage from "./SearchPage";
+import type { Track } from "./SearchPage";
 import "../index.css";
 import musicPlanetIcon from "../assets/logo.png";
 
@@ -84,7 +86,7 @@ const Icons = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   // 더미 데이터
   const userData = {
     handle: "music_cat",
@@ -93,7 +95,7 @@ export default function ProfilePage() {
     likesCurrent: 24,
     likesMax: 30,
     location: "123m 떨어져 있어요",
-    // 고해상도 고양이 이미지
+
     profileImg:
       "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
     likedSongs: [
@@ -105,13 +107,26 @@ export default function ProfilePage() {
 
   const progressPercent = (userData.likesCurrent / userData.likesMax) * 100;
 
+  // 검색창에서 노래를 선택했을 때의 로직 (필요 시 작성)
+  const handleSelectTrack = (track: Track) => {
+    console.log("선택된 트랙:", track);
+    setIsSearchOpen(false); // 선택 후 창 닫기
+  };
+
   const handleSongClick = () => {
     navigate("/profile/edit/song");
   };
-
   return (
     // 전체 배경을 감싸는 div
-    <div
+    <motion.div
+      // 1. 초기 상태 (화면 밖/투명)
+      initial={{ opacity: 0, x: 20 }}
+      // 2. 등장 상태 (정상 위치)
+      animate={{ opacity: 1, x: 0 }}
+      // 3. 페이지를 나갈 때 상태 (선택 사항)
+      exit={{ opacity: 0, x: -20 }}
+      // 4. 애니메이션 속도 및 느낌 설정
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="clean-profile-bg"
       style={{
         paddingTop: "60px",
@@ -119,6 +134,7 @@ export default function ProfilePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        minHeight: "100vh", // 전체 화면 보장
         background:
           "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
       }}
@@ -396,9 +412,8 @@ export default function ProfilePage() {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              // 기존 배경색(bg-gradient...)과 테두리(border...) 제거 -> 투명 배경
+              onClick={() => setIsSearchOpen(true)}
               className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
-              // onClick={() => ... } // 클릭 시 이동할 페이지가 있다면 여기에 추가
             >
               <img
                 src={musicPlanetIcon}
@@ -416,6 +431,29 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
-    </div>
+      {/* 8. 검색 페이지 오버레이 */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[200] pointer-events-auto"
+            style={{
+              background:
+                "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
+              backgroundAttachment: "fixed",
+            }}
+          >
+            <SearchPage
+              onBack={() => setIsSearchOpen(false)}
+              onPlayMusic={(url) => console.log("Play:", url)}
+              onSelectTrack={handleSelectTrack}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
