@@ -747,7 +747,7 @@ const GPS: React.FC<GPSProps> = ({
           style={{
             backgroundColor: "rgba(255, 255, 255, 0.2)",
             backdropFilter: "blur(12px)",
-            padding: "7px 16px",
+            padding: "5px 12px",
             borderRadius: "99px",
             fontSize: "9px",
             fontWeight: "900",
@@ -757,9 +757,38 @@ const GPS: React.FC<GPSProps> = ({
           }}
           className="active:scale-95 transition-transform"
         >
-          내 반경
-          {/* 2. 숫자 부분 (기본 흰색 유지 혹은 강조) */}
-          <span style={{ color: "#FF7EB3" }}> {currentMaxRadius} </span> m
+          <span
+            style={{
+              color: "rgba(255, 126, 179, 0.85)",
+              fontWeight: "600",
+              fontSize: "0.7rem",
+            }}
+          >
+            내 반경
+          </span>
+
+          <span
+            style={{
+              color: "#ffffff",
+              fontWeight: "800" /* 숫자 확실히 강조 */,
+              fontSize: "0.9rem" /* 숫자를 살짝 키워야 더 잘 보임 */,
+              margin: "0 4px" /* 숫자 양옆 간격 */,
+              lineHeight: "1" /* 텍스트 상하 치우침 방지 */,
+            }}
+          >
+            {" "}
+            {currentMaxRadius}
+          </span>
+
+          <span
+            style={{
+              color: "rgba(255, 255, 255, 0.85)",
+              fontWeight: "800",
+              fontSize: "0.85rem",
+            }}
+          >
+            m
+          </span>
         </button>
       </div>
       {/* 5. 사용자 리스트  */}
@@ -793,7 +822,7 @@ const GPS: React.FC<GPSProps> = ({
               <div className="text-[#FF7EB3] text-[12px] font-bold mb-1 flex items-center justify-end gap-1">
                 <span className="text-[10px]">♥</span> 234
               </div>
-              <div className="flex items-center justify-end font-medium text-[10px] text-white/50">
+              <div className="flex items-center justify-end font-medium text-[10px] text-white">
                 <div className="w-1.5 h-1.5 bg-[#FF7EB3] rounded-full mr-1.5" />
                 {user.distance}
               </div>
