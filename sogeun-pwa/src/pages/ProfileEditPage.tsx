@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../index.css';
 
 // SVG 아이콘
@@ -19,6 +20,7 @@ const Icons = {
 export default function ProfileEditPage() {
   const navigate = useNavigate();
   
+  // 초기값은 실제 유저 정보가 있다면 그걸로 설정 (예: useEffect로 받아온 값)
   const [nickname, setNickname] = useState('music_cat');
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -37,17 +39,50 @@ export default function ProfileEditPage() {
     fileInputRef.current?.click();
   };
 
-  const handleSubmit = () => {
-    console.log('수정 제출:', { nickname, profileImage });
-    alert('프로필이 수정되었습니다!');
-    navigate('/gps');
+  const handleSubmit = async () => {
+    // 1. 유효성 검사
+    if (!nickname.trim()) {
+      alert("닉네임을 입력해주세요!");
+      return;
+    }
+
+    try {
+      // 2. FormData 객체 생성
+      const formData = new FormData();
+      
+      // 백엔드 명세서에 맞춘 키 값 설정 (보통 'nickname', 'image' 등을 사용)
+      formData.append('nickname', nickname); 
+      
+      if (profileImage) {
+        // 'profileImage'는 백엔드가 정한 파일 키 이름이어야 합니다. (다를 경우 수정 필요)
+        formData.append('profileImage', profileImage); 
+      }
+
+      // 3. 서버 전송 (API 주소는 백엔드 명세에 따라 수정 필요)
+      const response = await axios.patch('/api/members/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data', // 파일 전송 필수 헤더
+          // 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` // 토큰 필요시 주석 해제
+        },
+      });
+
+      if (response.status === 200) {
+        console.log('수정 성공:', response.data);
+        alert('프로필이 수정되었습니다!');
+        navigate('/gps');
+      }
+
+    } catch (error) {
+      console.error('프로필 수정 실패:', error);
+      alert('프로필 수정 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (
     <div className="clean-profile-bg">
       
-      {/* 1. 상단 헤더 (위쪽 여백 살짝 줌) */}
-      <div className="profile-header-container" style={{ marginTop: '20px', padding: '0 20px', width: '100%', boxSizing: 'border-box' }}>
+      {/* 1. 상단 헤더 */}
+      <div className="profile-header-container" style={{ marginTop: '10px', padding: '0 20px', width: '100%', boxSizing: 'border-box' }}>
         <button className="header-btn" onClick={() => navigate(-1)}>
           <Icons.Back />
         </button>
@@ -59,7 +94,7 @@ export default function ProfileEditPage() {
         </button>
       </div>
 
-      {/* 2. 프로필 사진 편집 영역 (간격 조절) */}
+      {/* 2. 프로필 사진 편집 영역 */}
       <div className="profile-edit-section" style={{ marginTop: '50px', marginBottom: '40px' }}>
         <div className="profile-image-circle" onClick={handleProfileClick}>
           {previewUrl ? (

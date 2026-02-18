@@ -21,7 +21,7 @@ const SongEditPage: React.FC = () => {
   const [limit, setLimit] = useState(20);
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
 
-  // 어떤 곡이 선택되었는지 저장하는 상태 추가
+  // 어떤 곡이 선택되었는지 저장하는 상태
   const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -70,7 +70,7 @@ const SongEditPage: React.FC = () => {
     }
   }, [results, limit]);
 
-  // --- 오디오 로직 ---
+  // --- 오디오 미리듣기 로직 ---
   const handleAlbumClick = (e: React.MouseEvent, track: Track) => {
     e.stopPropagation();
     
@@ -87,20 +87,44 @@ const SongEditPage: React.FC = () => {
     }
   };
 
-  // 색상 변경 후 이동
-  const handleSelectTrack = (track: Track) => {
-    // 1. 선택된 ID 설정 (회색으로 변함)
+  // --- 노래 선택 및 서버 전송 로직 ---
+  const handleSelectTrack = async (track: Track) => {
+    // 1. 선택된 UI 효과 주기 (회색 배경 등)
     setSelectedTrackId(track.trackId);
     
-    // 2. 오디오 정지
+    // 2. 미리듣기 오디오 정지
     if (audioRef.current) audioRef.current.pause();
     
-    console.log("선택된 인생 노래:", track.trackName);
+    console.log("선택된 프로필 노래:", track.trackName);
 
-    // 3. 짧은 딜레이 후 뒤로가기 (사용자가 색이 바뀐걸 인지할 시간 줌)
-    setTimeout(() => {
-        navigate(-1);
-    }, 200);
+    try {
+      // 3. 서버에 변경 요청 보내기
+      // ※ 주의: '/api/members/profile/music' 부분은 백엔드 개발자가 알려준 실제 주소로 수정해야 할 수 있음
+      await axios.patch('/api/members/profile/music', {
+        trackName: track.trackName,
+        artistName: track.artistName,
+        artworkUrl: track.artworkUrl100, // 앨범 커버
+        previewUrl: track.previewUrl,    // 미리듣기 링크
+      }, {
+        headers: {
+           // 토큰이 필요한 경우 아래 주석을 해제하고 사용
+           // 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+
+      // 4. 성공 시 알림 및 페이지 이동
+      alert(`'${track.trackName}'(으)로 배경음악이 변경되었습니다!`);
+      
+      // 5. UX를 위해 약간의 딜레이 후 이동
+      setTimeout(() => {
+        navigate(-1); // 프로필 페이지로 복귀
+      }, 200);
+
+    } catch (error) {
+      console.error("음악 변경 실패:", error);
+      alert("음악 변경 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      setSelectedTrackId(null); // 에러 발생 시 선택 표시 해제
+    }
   };
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -150,10 +174,7 @@ const SongEditPage: React.FC = () => {
                 className="w-1 bg-white rounded-full"
               />
             </div>
-          ) : (
-             // 재생 아이콘
-             null
-          )}
+          ) : null}
         </div>
 
         {/* 텍스트 정보 */}
@@ -166,16 +187,17 @@ const SongEditPage: React.FC = () => {
           </p>
         </div>
 
-        {/* 우측 '선택' 버튼 추가 */}
+        {/* 우측 '선택' 버튼 */}
         <button
             onClick={() => handleSelectTrack(track)}
+            disabled={isSelected} // 이미 선택된 경우 중복 클릭 방지
             className={`text-[13px] font-bold px-3 py-1.5 rounded-full transition-all
                 ${isSelected 
-                    ? "text-[#333] scale-95" // 선택됐을 때
+                    ? "text-[#333] scale-95 cursor-default" // 선택됐을 때
                     : "text-[#555] hover:bg-black/5 active:scale-95" // 평소
                 }`}
         >
-            선택
+            {isSelected ? "완료" : "선택"}
         </button>
       </div>
     );

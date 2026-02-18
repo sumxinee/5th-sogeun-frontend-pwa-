@@ -281,6 +281,7 @@ export default function ProfilePage() {
           프로필 수정
         </button>
         <button
+          onClick={() => navigate("/sogeun-songs")}
           className="glass-btn"
           style={{
             flex: 1,
