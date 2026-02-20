@@ -53,7 +53,13 @@ const SearchPage: React.FC<SearchPageProps> = ({
 
   const [results, setResults] = useState<Track[]>([]);
   const [limit, setLimit] = useState(20);
-  const [likedTracks, setLikedTracks] = useState<Track[]>([]);
+  const [likedTracks, setLikedTracks] = useState<Track[]>(() => {
+    const saved = localStorage.getItem("myLikedTracks");
+    return saved ? JSON.parse(saved) : [];
+  });
+  React.useEffect(() => {
+    localStorage.setItem("myLikedTracks", JSON.stringify(likedTracks));
+  }, [likedTracks]);
 
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
   // 스크롤 컨테이너를 잡기 위한 ref
