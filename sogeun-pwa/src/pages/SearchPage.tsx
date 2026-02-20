@@ -22,6 +22,7 @@ interface SearchPageProps {
   onBack: () => void;
   onPlayMusic: (url: string) => void;
   onSelectTrack: (track: Track) => void;
+  initialTab?: "search" | "likes";
 }
 
 // 슬라이드 애니메이션 설정
@@ -46,8 +47,9 @@ const SearchPage: React.FC<SearchPageProps> = ({
   onBack,
   onPlayMusic,
   onSelectTrack,
+  initialTab = "search",
 }) => {
-  const [activeTab, setActiveTab] = useState<"search" | "likes">("search");
+  const [activeTab, setActiveTab] = useState<"search" | "likes">(initialTab);
   const [direction, setDirection] = useState(0);
   const [query, setQuery] = useState("");
 
@@ -295,10 +297,10 @@ const SearchPage: React.FC<SearchPageProps> = ({
         <div className="w-full flex justify-between items-center mb-6">
           <button
             onClick={onBack}
-            className="bg-white/20 p-3 rounded-full border border-white/30 backdrop-blur-md shadow-sm"
+            className="bg-white/20 p-3 rounded-full border border-white/30"
           >
-            <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
-              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+            <svg className="w-8 h-8 fill-white" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
             </svg>
           </button>
 
