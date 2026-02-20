@@ -73,7 +73,7 @@ const SongEditPage: React.FC = () => {
   // --- 오디오 미리듣기 로직 ---
   const handleAlbumClick = (e: React.MouseEvent, track: Track) => {
     e.stopPropagation();
-    
+
     if (playingTrackId === track.trackId) {
       audioRef.current?.pause();
       setPlayingTrackId(null);
@@ -91,35 +91,38 @@ const SongEditPage: React.FC = () => {
   const handleSelectTrack = async (track: Track) => {
     // 1. 선택된 UI 효과 주기 (회색 배경 등)
     setSelectedTrackId(track.trackId);
-    
+
     // 2. 미리듣기 오디오 정지
     if (audioRef.current) audioRef.current.pause();
-    
+
     console.log("선택된 프로필 노래:", track.trackName);
 
     try {
       // 3. 서버에 변경 요청 보내기
       // ※ 주의: '/api/members/profile/music' 부분은 백엔드 개발자가 알려준 실제 주소로 수정해야 할 수 있음
-      await axios.patch('/api/members/profile/music', {
-        trackName: track.trackName,
-        artistName: track.artistName,
-        artworkUrl: track.artworkUrl100, // 앨범 커버
-        previewUrl: track.previewUrl,    // 미리듣기 링크
-      }, {
-        headers: {
-           // 토큰이 필요한 경우 아래 주석을 해제하고 사용
-           // 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      await axios.patch(
+        "/api/members/profile/music",
+        {
+          trackName: track.trackName,
+          artistName: track.artistName,
+          artworkUrl: track.artworkUrl100, // 앨범 커버
+          previewUrl: track.previewUrl, // 미리듣기 링크
+        },
+        {
+          headers: {
+            // 토큰이 필요한 경우 아래 주석을 해제하고 사용
+            // 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },
+        },
+      );
 
       // 4. 성공 시 알림 및 페이지 이동
       alert(`'${track.trackName}'(으)로 배경음악이 변경되었습니다!`);
-      
+
       // 5. UX를 위해 약간의 딜레이 후 이동
       setTimeout(() => {
         navigate(-1); // 프로필 페이지로 복귀
       }, 200);
-
     } catch (error) {
       console.error("음악 변경 실패:", error);
       alert("음악 변경 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
@@ -127,8 +130,11 @@ const SongEditPage: React.FC = () => {
     }
   };
 
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.x > 100 || info.velocity.x > 500) {
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    if (info.offset.y > 100 || info.velocity.y > 500) {
       navigate(-1);
     }
   };
@@ -142,15 +148,13 @@ const SongEditPage: React.FC = () => {
 
     return (
       <div
+        onClick={(e) => handleAlbumClick(e, track)}
         className={`flex items-center p-3 rounded-[20px] mb-3 transition-colors duration-200
-                   border border-white/20 shadow-sm
+                   border border-white/20 shadow-sm cursor-pointer
                    ${isSelected ? "bg-black/10" : "bg-white/60 hover:bg-white/70"}`}
       >
         {/* 앨범 커버 */}
-        <div
-          className="relative w-12 h-12 rounded-xl mr-4 shrink-0 overflow-hidden cursor-pointer shadow-sm"
-          onClick={(e) => handleAlbumClick(e, track)}
-        >
+        <div className="relative w-12 h-12 rounded-xl mr-4 shrink-0 overflow-hidden cursor-pointer shadow-sm">
           <img
             src={track.artworkUrl100}
             className="w-full h-full object-cover"
@@ -189,15 +193,16 @@ const SongEditPage: React.FC = () => {
 
         {/* 우측 '선택' 버튼 */}
         <button
-            onClick={() => handleSelectTrack(track)}
-            disabled={isSelected} // 이미 선택된 경우 중복 클릭 방지
-            className={`text-[13px] font-bold px-3 py-1.5 rounded-full transition-all
-                ${isSelected 
+          onClick={() => handleSelectTrack(track)}
+          disabled={isSelected} // 이미 선택된 경우 중복 클릭 방지
+          className={`text-[13px] font-bold px-3 py-1.5 rounded-full transition-all
+                ${
+                  isSelected
                     ? "text-[#333] scale-95 cursor-default" // 선택됐을 때
                     : "text-[#555] hover:bg-black/5 active:scale-95" // 평소
                 }`}
         >
-            {isSelected ? "완료" : "선택"}
+          {isSelected ? "완료" : "선택"}
         </button>
       </div>
     );
@@ -205,17 +210,19 @@ const SongEditPage: React.FC = () => {
 
   return (
     <motion.div
-      drag="x"
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={{ right: 0.5 }}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0, bottom: 0.5 }}
       onDragEnd={handleDragEnd}
-      initial={{ x: 300, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 300, opacity: 0 }}
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="absolute inset-0 z-50 flex flex-col w-full min-h-screen pt-12"
       style={{
-        background: "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)"
+        background:
+          "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
+        backgroundAttachment: "fixed",
       }}
     >
       <audio ref={audioRef} onEnded={() => setPlayingTrackId(null)} />
@@ -226,13 +233,16 @@ const SongEditPage: React.FC = () => {
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 text-white active:scale-90 transition-transform"
         >
-          <svg className="w-8 h-8 fill-white drop-shadow-md" viewBox="0 0 24 24">
+          <svg
+            className="w-8 h-8 fill-white drop-shadow-md"
+            viewBox="0 0 24 24"
+          >
             <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
           </svg>
         </button>
 
         <h1 className="text-white text-[18px] font-bold drop-shadow-sm absolute left-1/2 -translate-x-1/2">
-            노래변경
+          노래변경
         </h1>
         <div className="w-8" />
       </div>
@@ -276,11 +286,11 @@ const SongEditPage: React.FC = () => {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-[60%] opacity-80">
-                <div className="mb-4 relative">
-                   <svg className="w-24 h-24 fill-white/80" viewBox="0 0 24 24">
-                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                   </svg>
-                </div>
+              <div className="mb-4 relative">
+                <svg className="w-24 h-24 fill-white/80" viewBox="0 0 24 24">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                </svg>
+              </div>
               <p className="text-white/90 text-[15px] font-medium">
                 검색 결과가 여기에 표시됩니다.
               </p>
