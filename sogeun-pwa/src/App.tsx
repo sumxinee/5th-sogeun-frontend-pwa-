@@ -86,6 +86,7 @@ const MainScreen = () => {
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="absolute inset-0 z-50"
           >
             <SearchPage

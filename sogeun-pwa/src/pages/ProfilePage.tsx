@@ -104,7 +104,20 @@ export default function ProfilePage() {
       "https://images.unsplash.com/photo-1459749411177-287ce3288b71?w=150",
     ],
   };
+  const [searchInitialTab, setSearchInitialTab] = useState<"search" | "likes">(
+    "search",
+  );
+  // "더보기" 전용 클릭 핸들러
+  const handleOpenLikes = () => {
+    setSearchInitialTab("likes"); // 좋아요 탭으로 설정
+    setIsSearchOpen(true); // 검색창 열기
+  };
 
+  // 중앙 행성 버튼 클릭 핸들러 (기본 검색으로 열기)
+  const handleOpenSearch = () => {
+    setSearchInitialTab("search"); // 검색 탭으로 설정
+    setIsSearchOpen(true);
+  };
   const progressPercent = (userData.likesCurrent / userData.likesMax) * 100;
 
   // 검색창에서 노래를 선택했을 때의 로직 (필요 시 작성)
@@ -367,6 +380,7 @@ export default function ProfilePage() {
             좋아요 누른 노래
           </h3>
           <span
+            onClick={handleOpenLikes}
             style={{
               fontSize: "11px",
               fontWeight: "500",
@@ -374,6 +388,7 @@ export default function ProfilePage() {
               margin: 3,
               cursor: "pointer",
               opacity: 0.9,
+              textDecoration: "underline",
             }}
           >
             더보기
@@ -412,7 +427,7 @@ export default function ProfilePage() {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => setIsSearchOpen(true)}
+              onClick={handleOpenSearch}
               className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
             >
               <img
@@ -447,6 +462,7 @@ export default function ProfilePage() {
             }}
           >
             <SearchPage
+              initialTab={searchInitialTab}
               onBack={() => setIsSearchOpen(false)}
               onPlayMusic={(url) => console.log("Play:", url)}
               onSelectTrack={handleSelectTrack}
