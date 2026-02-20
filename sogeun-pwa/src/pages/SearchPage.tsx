@@ -340,7 +340,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
             className="flex-1 flex flex-col overflow-hidden px-6 w-full"
           >
             {/* 검색창 */}
-            <div className="flex items-center bg-white/50 h-[52px] rounded-[20px] px-5 border border-white/40 mb-6 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
+            <div className="flex items-center bg-white/50 h-[52px] rounded-[20px] px-5 border border-white/40 mb-0.8 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
               <input
                 className="bg-transparent flex-1 outline-none font-medium text-[#8a8a8a] placeholder:text-[#333]/60 text-[15px]"
                 value={query}
@@ -355,10 +355,18 @@ const SearchPage: React.FC<SearchPageProps> = ({
                 검색
               </button>
             </div>
-
+            {/* 안내 멘트 추가 */}
+            <p className="text-[11px] text-white/70 font-medium py-4 ml-1 drop-shadow-sm leading-none">
+              💡 앨범 표지를 누르면 음악을 미리 들을 수 있어요. 다시 누르면
+              노래가 멈춰요!
+            </p>
             <div
               ref={scrollRef}
               className="flex-1 overflow-y-auto space-y-2 pb-24 scrollbar-hide"
+              style={{
+                msOverflowStyle: "none" /* IE, Edge */,
+                scrollbarWidth: "none" /* Firefox */,
+              }}
             >
               {results.length > 0 ? (
                 <>
