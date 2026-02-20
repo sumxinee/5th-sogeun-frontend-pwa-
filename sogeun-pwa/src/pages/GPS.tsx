@@ -9,6 +9,8 @@ import { locationAtom } from "../store/location"; // 기존에 있던 위치 아
 import { currentTrackAtom, isPlayingAtom } from "../store/music";
 import type { Track } from "./SearchPage";
 import musicPlanetIcon from "../assets/logo.png";
+import { Heart, ThumbsUp } from "lucide-react";
+
 interface ServerUserData {
   id: number;
   nickname: string;
@@ -194,12 +196,14 @@ const GPS: React.FC<GPSProps> = ({
   const navigate = useNavigate();
   const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [isThumbUp, setIsThumbUp] = useState(false);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [isThumbUp, setIsThumbUp] = useState<boolean>(false);
   const [currentTrack] = useAtom(currentTrackAtom);
   //console.log("현재 트랙 데이터:", currentTrack);
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
   const [isUserMusicPlaying, setIsUserMusicPlaying] = useState(false);
+  // 🔥 이 줄을 추가하세요! (추천 숫자를 관리하는 상태)
+  const [recommendCount, setRecommendCount] = useState<number>(0);
 
   // 2. Jotai 상태 구독
   const [token, setToken] = useAtom(accessTokenAtom);
@@ -209,6 +213,73 @@ const GPS: React.FC<GPSProps> = ({
   const [myUserId] = useAtom(userIdAtom);
   const BASE_URL =
     "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+
+  const handleRecommend = async () => {
+    if (!selectedUser) return;
+    const prevThumb = isThumbUp;
+    const prevCount = recommendCount;
+
+    if (!prevThumb) setRecommendCount(prevCount + 1);
+    else setRecommendCount(prevCount - 1);
+    setIsThumbUp(!prevThumb);
+
+    try {
+      const response = await fetch(
+        `${BASE_URL}/api/broadcast/${selectedUser.id}/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (response.ok) {
+        if (!isThumbUp) {
+          setRecommendCount((prev: number) => prev + 1);
+        } else {
+          setRecommendCount((prev: number) => prev - 1);
+        }
+        setIsThumbUp(!isThumbUp);
+      }
+    } catch (error) {
+      console.error("추천 통신 실패:", error);
+    }
+  };
+  // ✅ 2. 좋아요(하트) 버튼 클릭 시 서버 전송 함수 (검색창/라이브러리 동기화)
+  const handleLikeToggle = async () => {
+    if (!selectedUser) return;
+    const prevLiked = isLiked;
+    setIsLiked(!prevLiked); // UI 즉시 업데이트
+    try {
+      const response = await fetch(`${BASE_URL}/api/update/music/likes`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          musicName: selectedUser.song,
+          artistName: selectedUser.artist,
+          artworkUrl: selectedUser.artworkUrl,
+          previewUrl: selectedUser.previewUrl,
+        }),
+      });
+
+      if (response.ok) {
+        setIsLiked(!isLiked); // 하트 색상 변경
+      }
+    } catch (error) {
+      console.error("좋아요 통신 실패:", error);
+    }
+  };
+  // selectedUser가 바뀔 때마다 해당 유저의 추천 정보를 가져오는 로직 추가
+  useEffect(() => {
+    if (selectedUser) {
+      // 예시: 실제로는 유저 상세 정보를 가져오는 API가 있다면 사용
+      // setRecommendCount(selectedUser.likeCount || 0);
+    }
+  }, [selectedUser]);
 
   const toggleBottomSheetMusic = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -950,10 +1021,10 @@ const GPS: React.FC<GPSProps> = ({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               //transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[#F3F7FF]/80 rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl"
+              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[#F3F7FF]/70 rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl"
             >
               {/* 상단 헤더: 민트색 확인 버튼 */}
-              <div className="w-full flex justify-between items-center mb-4 px-2">
+              <div className="w-full flex justify-between items-center mb-4 px-2 ">
                 <button
                   onClick={() => setSelectedUser(null)}
                   className="p-2 text-[#4FD1C5]"
@@ -969,8 +1040,8 @@ const GPS: React.FC<GPSProps> = ({
               </div>
 
               {/* 프로필 섹션 */}
-              <div className="flex flex-col items-center mb-8">
-                <div className="w-24 h-24 rounded-full mb-4 shadow-inner overflow-hidden border-2 border-white">
+              <div className="flex flex-col items-center mb-5 pt-8">
+                <div className="w-24 h-24 rounded-full mb-6 shadow-inner overflow-hidden border-2 border-white">
                   {selectedUser.artworkUrl && (
                     <img
                       src={selectedUser.artworkUrl}
@@ -979,7 +1050,7 @@ const GPS: React.FC<GPSProps> = ({
                     />
                   )}
                 </div>
-                <h2 className="text-[18px] font-black text-black mb-1">
+                <h2 className="text-[18px] font-black text-black">
                   {selectedUser.name}
                 </h2>
                 <p className="text-[14px] text-gray-400 font-medium">
@@ -988,7 +1059,7 @@ const GPS: React.FC<GPSProps> = ({
               </div>
 
               {/* 앨범 정보 전체 */}
-              <div className="flex flex-col items-center w-full px-4 mb-10">
+              <div className="flex flex-col items-center w-full px-4 mb-8">
                 <motion.div
                   onClick={toggleBottomSheetMusic}
                   whileTap={{ scale: 0.98 }} // 클릭 효과도 제거하려면 1로 변경
@@ -1046,43 +1117,82 @@ const GPS: React.FC<GPSProps> = ({
                 </motion.div>
               </div>
 
-              {/* 하단 버튼 영역: 핫핑크 하트 & 민트 엄지 */}
-              <div className="flex flex-col items-center pb-12">
-                <div className="flex items-center gap-12">
-                  {/* 핫핑크 하트 버튼 */}
-                  <motion.button
-                    onClick={() => setIsLiked(!isLiked)}
-                    whileTap={{ scale: 0.9 }}
-                    className="flex flex-col items-center"
+              {/* 하단 버튼 영역: Glassmorphism 스타일로 교체 */}
+              <div className="flex justify-center items-center gap-4 pb-12">
+                {/* 좋아요 버튼 (카운트 없음) */}
+                <motion.button
+                  onClick={handleLikeToggle}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    backdropFilter: "blur(12px)",
+                    padding: "8px 16px",
+                    borderRadius: "99px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
+                    border: "none",
+                  }}
+                >
+                  <Heart
+                    size={18}
+                    color={isLiked ? "#FF4B91" : "rgba(255, 126, 179, 0.85)"}
+                    fill={isLiked ? "#FF4B91" : "transparent"}
+                    style={{ transition: "all 0.3s ease" }}
+                  />
+                  <span
+                    style={{
+                      color: "#ffffff",
+                      fontWeight: "700",
+                      fontSize: "0.8rem",
+                    }}
                   >
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 24 24"
-                      fill={isLiked ? "#FF4B91" : "#8b8c8f"}
-                      className="transition-colors duration-300"
-                    >
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                    </svg>
-                  </motion.button>
+                    좋아요
+                  </span>
+                </motion.button>
 
-                  {/* 민트 엄지 버튼 */}
-                  <motion.button
-                    onClick={() => setIsThumbUp(!isThumbUp)}
-                    whileTap={{ scale: 0.9 }}
-                    className="flex flex-col items-center gap-1"
+                {/* 추천 버튼 (카운트 포함) */}
+                <motion.button
+                  onClick={handleRecommend}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    backdropFilter: "blur(12px)",
+                    padding: "8px 16px",
+                    borderRadius: "99px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
+                    border: "none",
+                  }}
+                >
+                  <ThumbsUp
+                    size={18}
+                    color={isThumbUp ? "#4FD1C5" : "#ffffff"}
+                    fill={isThumbUp ? "#4FD1C5" : "transparent"}
+                    style={{ transition: "all 0.3s" }}
+                  />
+                  <span
+                    style={{
+                      color: "#ffffff",
+                      fontWeight: "700",
+                      fontSize: "0.8rem",
+                    }}
                   >
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 24 24"
-                      fill={isThumbUp ? "#4FD1C5" : "#8b8c8f"}
-                      className="transition-colors duration-300"
-                    >
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                    </svg>
-                  </motion.button>
-                </div>
+                    추천
+                  </span>
+                  <span
+                    style={{
+                      color: "#ffffff",
+                      fontWeight: "900",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {recommendCount}
+                  </span>
+                </motion.button>
               </div>
             </motion.div>
           </>
