@@ -269,6 +269,10 @@ const SongEditPage: React.FC = () => {
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto space-y-1 pb-24 scrollbar-hide"
+          style={{
+            msOverflowStyle: "none" /* IE, Edge */,
+            scrollbarWidth: "none" /* Firefox */,
+          }}
         >
           {results.length > 0 ? (
             <>
