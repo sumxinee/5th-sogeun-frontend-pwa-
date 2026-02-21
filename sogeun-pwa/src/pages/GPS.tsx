@@ -4,11 +4,13 @@ import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useAtom } from "jotai"; // 1. Jotai 추가
-import { accessTokenAtom, userIdAtom } from "../store/auth"; // 토큰 아톰
+import { accessTokenAtom, numericUserIdAtom } from "../store/auth"; // 토큰 아톰
 import { locationAtom } from "../store/location"; // 기존에 있던 위치 아톰 활용
 import { currentTrackAtom, isPlayingAtom } from "../store/music";
 import type { Track } from "./SearchPage";
 import musicPlanetIcon from "../assets/logo.png";
+import { Heart, ThumbsUp } from "lucide-react";
+
 interface ServerUserData {
   id: number;
   nickname: string;
@@ -40,6 +42,7 @@ interface HUDCircle {
 
 interface DetectedUser {
   id: number;
+  broadcastId: number;
   name: string;
   song: string;
   artist: string;
@@ -194,21 +197,136 @@ const GPS: React.FC<GPSProps> = ({
   const navigate = useNavigate();
   const [selectedUser, setSelectedUser] = useState<DetectedUser | null>(null);
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [isThumbUp, setIsThumbUp] = useState(false);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [isThumbUp, setIsThumbUp] = useState<boolean>(false);
   const [currentTrack] = useAtom(currentTrackAtom);
   //console.log("현재 트랙 데이터:", currentTrack);
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
   const [isUserMusicPlaying, setIsUserMusicPlaying] = useState(false);
+  // 🔥 이 줄을 추가하세요! (추천 숫자를 관리하는 상태)
+  const [recommendCount, setRecommendCount] = useState<number>(0);
 
   // 2. Jotai 상태 구독
   const [token, setToken] = useAtom(accessTokenAtom);
   const [myLocation, setMyLocation] = useAtom(locationAtom); // 전역 위치 상태 사용
   const [serverUsers, setServerUsers] = useState<ServerUserData[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([]);
-  const [myUserId] = useAtom(userIdAtom);
+  const [myUserId] = useAtom(numericUserIdAtom);
   const BASE_URL =
     "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+
+  const handleRecommend = async () => {
+    if (!selectedUser || !token) return;
+    const prevThumb = isThumbUp;
+    const prevCount = recommendCount;
+
+    if (!prevThumb) setRecommendCount(prevCount + 1);
+    else setRecommendCount(prevCount - 1);
+    setIsThumbUp(!prevThumb);
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/broadcast/${selectedUser.broadcastId}/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`, // 403 에러 방지 핵심
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!res.ok) throw new Error("추천 서버 응답 에러");
+      console.log("👍 추천 성공");
+    } catch (error) {
+      // 실패 시 롤백
+      setIsThumbUp(prevThumb);
+      setRecommendCount(prevCount);
+      console.error("추천 실패:", error);
+    }
+  };
+  // ✅ 2. 좋아요(하트) 버튼 클릭 시 서버 전송 함수 (검색창/라이브러리 동기화)
+  const handleLikeToggle = async () => {
+    if (!selectedUser || !token) return;
+    const prevLiked = isLiked;
+    setIsLiked(!prevLiked); // UI 즉시 업데이트
+    try {
+      const res = await fetch(`${BASE_URL}/api/update/music/likes`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          musicName: selectedUser.song,
+          artistName: selectedUser.artist,
+          artworkUrl: selectedUser.artworkUrl,
+          previewUrl: selectedUser.previewUrl,
+        }),
+      });
+
+      if (!res.ok) throw new Error("서버 저장 실패");
+      console.log("🎵 좋아요 페이지에 반영되었습니다.");
+    } catch (error) {
+      setIsLiked(prevLiked);
+      console.error("좋아요 통신 실패:", error);
+    }
+  };
+  // 명세서 기반 API 호출 함수들
+  const broadcastAPI = {
+    // 음악 송출 ON
+    on: async (token: string) =>
+      fetch(`${BASE_URL}/api/broadcast/on`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+
+    // 음악 송출 OFF
+    off: async (token: string) =>
+      fetch(`${BASE_URL}/api/broadcast/off`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+
+    // 송출 중인 노래 변경
+    changeMusic: async (token: string, musicData: any) =>
+      fetch(`${BASE_URL}/api/broadcast/changemusic`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(musicData),
+      }),
+  };
+  // selectedUser가 바뀔 때마다 해당 유저의 추천 정보를 가져오는 로직 추가
+  useEffect(() => {
+    const checkInitialLikeStatus = async () => {
+      if (!selectedUser || !token) return;
+
+      try {
+        // 명세서의 '유저가 좋아요한 노래 리스트' API 호출
+        const res = await fetch(`${BASE_URL}/api/library/likes`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const likedList = await res.json();
+
+        // 현재 선택된 유저의 노래가 내 좋아요 리스트에 있는지 확인
+        const isAlreadyLiked = likedList.some(
+          (item: any) =>
+            item.musicName === selectedUser.song &&
+            item.artistName === selectedUser.artist,
+        );
+
+        setIsLiked(isAlreadyLiked);
+        // 추천수도 서버 데이터가 있다면 여기서 setRecommendCount 해주면 유지됩니다.
+      } catch (err) {
+        console.error("초기 상태 로딩 실패:", err);
+      }
+    };
+
+    checkInitialLikeStatus();
+  }, [selectedUser, token]);
 
   const toggleBottomSheetMusic = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -291,7 +409,58 @@ const GPS: React.FC<GPSProps> = ({
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
   //----------------------------------------------------------
-  //---------------------------sse---------------------------
+  useEffect(() => {
+    if (!token) return;
+    const ctrl = new AbortController();
+
+    const connectStream = async () => {
+      try {
+        await fetchEventSource(`${BASE_URL}/api/sse/stream`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+          },
+
+          signal: ctrl.signal,
+          onopen: async (res) => {
+            if (res.ok) {
+              console.log("📡 스트림 연결 성공");
+              // 약간의 딜레이를 주어 서버가 세션을 완전히 잡을 시간을 줍니다.
+              setTimeout(async () => {
+                try {
+                  const onRes = await broadcastAPI.on(token);
+                  if (onRes.status === 500) {
+                    console.error(
+                      "서버 내부 에러: 방송 송출을 시작할 수 없습니다.",
+                    );
+                  } else {
+                    console.log("📻 방송 송출 시작 (ON)");
+                  }
+                } catch (e) {
+                  console.error("ON 호출 실패", e);
+                }
+              }, 500);
+            }
+          },
+          onmessage: (event) => {
+            if (event.data !== "heartbeat") {
+              console.log("📻 방송 스트림 수신:", JSON.parse(event.data));
+            }
+          },
+        });
+      } catch (err) {
+        console.error("Stream 에러:", err);
+      }
+    };
+
+    connectStream();
+    return () => {
+      broadcastAPI.off(token);
+      ctrl.abort();
+    };
+  }, [token]);
+  //--------------------------- sse- nearby --------------------------
 
   useEffect(() => {
     // 1. 숫자로 변환 (NaN 방지 및 백엔드 타입 일치)
@@ -302,10 +471,14 @@ const GPS: React.FC<GPSProps> = ({
     const isTokenValid = !!token;
 
     if (!isIdValid || !isTokenValid || !isLocationValid) {
-      console.log("⏳ SSE 대기 중...", { numericUserId, isLocationValid });
+      console.log("⏳ SSE 대기 중...", {
+        numericUserId,
+        isLocationValid,
+        isTokenValid,
+      });
       return;
     }
-    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${numericUserId}&lat=${myLocation!.lat}&lon=${myLocation!.lon}`;
+    const sseEndpoint = `${BASE_URL}/api/sse/location/nearby?userId=${numericUserId}&lat=${myLocation!.lat}&lon=${myLocation!.lon}`;
     const ctrl = new AbortController();
 
     const connectSSE = async () => {
@@ -348,13 +521,13 @@ const GPS: React.FC<GPSProps> = ({
 
     connectSSE();
     return () => ctrl.abort(); // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
-  }, [token, myLocation?.lat, myLocation?.lon]); // 3. 토큰과 위치를 의존성에 추가
+  }, [token, myLocation?.lat, myLocation?.lon, myUserId]); // 3. 토큰과 위치를 의존성에 추가
 
   useEffect(() => {
     console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
   }, []);
 
-  // ------------------- [기능 2: 내 위치 추적 및 서버 전송 (POST)] -------------------
+  // ------------------- [기능 2: 내 위치 추적 및 서버 전송 update (POST)] -------------------
   useEffect(() => {
     if (!("geolocation" in navigator)) {
       console.error("이 브라우저는 위치 정보를 지원하지 않습니다.");
@@ -380,7 +553,7 @@ const GPS: React.FC<GPSProps> = ({
             return;
           }
           // 2. URL 파라미터 구성 (userId만 포함하는 것이 가장 깔끔함)
-          const url = `${BASE_URL}/sse/location/update?userId=${numericUserId}`;
+          const url = `${BASE_URL}/api/sse/location/update?userId=${numericUserId}`;
 
           fetch(url, {
             method: "POST",
@@ -412,6 +585,7 @@ const GPS: React.FC<GPSProps> = ({
     // 1. 레이더에 항상 띄울 목데이터 정의
     const mockUser: DetectedUser = {
       id: 999,
+      broadcastId: 998,
       name: "홍익대학교 동기",
       song: "Ditto",
       artist: "NewJeans",
@@ -436,6 +610,7 @@ const GPS: React.FC<GPSProps> = ({
 
       return {
         id: user.id,
+        broadcastId: user.id,
         name: user.nickname,
         song: user.musicName,
         artist: user.artistName,
@@ -493,6 +668,7 @@ const GPS: React.FC<GPSProps> = ({
 
       return {
         id: user.id,
+        broadcastId: user.id,
         name: user.nickname,
         song: user.musicName,
         artist: user.artistName,
@@ -950,10 +1126,10 @@ const GPS: React.FC<GPSProps> = ({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               //transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[#F3F7FF]/80 rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl"
+              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[#F3F7FF]/70 rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl"
             >
               {/* 상단 헤더: 민트색 확인 버튼 */}
-              <div className="w-full flex justify-between items-center mb-4 px-2">
+              <div className="w-full flex justify-between items-center mb-4 px-2 ">
                 <button
                   onClick={() => setSelectedUser(null)}
                   className="p-2 text-[#4FD1C5]"
@@ -969,8 +1145,8 @@ const GPS: React.FC<GPSProps> = ({
               </div>
 
               {/* 프로필 섹션 */}
-              <div className="flex flex-col items-center mb-8">
-                <div className="w-24 h-24 rounded-full mb-4 shadow-inner overflow-hidden border-2 border-white">
+              <div className="flex flex-col items-center mb-5 pt-8">
+                <div className="w-24 h-24 rounded-full mb-6 shadow-inner overflow-hidden border-2 border-white">
                   {selectedUser.artworkUrl && (
                     <img
                       src={selectedUser.artworkUrl}
@@ -979,7 +1155,7 @@ const GPS: React.FC<GPSProps> = ({
                     />
                   )}
                 </div>
-                <h2 className="text-[18px] font-black text-black mb-1">
+                <h2 className="text-[18px] font-black text-black">
                   {selectedUser.name}
                 </h2>
                 <p className="text-[14px] text-gray-400 font-medium">
@@ -988,7 +1164,7 @@ const GPS: React.FC<GPSProps> = ({
               </div>
 
               {/* 앨범 정보 전체 */}
-              <div className="flex flex-col items-center w-full px-4 mb-10">
+              <div className="flex flex-col items-center w-full px-4 mb-8">
                 <motion.div
                   onClick={toggleBottomSheetMusic}
                   whileTap={{ scale: 0.98 }} // 클릭 효과도 제거하려면 1로 변경
@@ -1046,43 +1222,82 @@ const GPS: React.FC<GPSProps> = ({
                 </motion.div>
               </div>
 
-              {/* 하단 버튼 영역: 핫핑크 하트 & 민트 엄지 */}
-              <div className="flex flex-col items-center pb-12">
-                <div className="flex items-center gap-12">
-                  {/* 핫핑크 하트 버튼 */}
-                  <motion.button
-                    onClick={() => setIsLiked(!isLiked)}
-                    whileTap={{ scale: 0.9 }}
-                    className="flex flex-col items-center"
+              {/* 하단 버튼 영역: Glassmorphism 스타일로 교체 */}
+              <div className="flex justify-center items-center gap-4 pb-12">
+                {/* 좋아요 버튼 (카운트 없음) */}
+                <motion.button
+                  onClick={handleLikeToggle}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    backdropFilter: "blur(12px)",
+                    padding: "8px 16px",
+                    borderRadius: "99px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
+                    border: "none",
+                  }}
+                >
+                  <Heart
+                    size={18}
+                    color={isLiked ? "#FF4B91" : "rgba(255, 126, 179, 0.85)"}
+                    fill={isLiked ? "#FF4B91" : "transparent"}
+                    style={{ transition: "all 0.3s ease" }}
+                  />
+                  <span
+                    style={{
+                      color: "#ffffff",
+                      fontWeight: "700",
+                      fontSize: "0.8rem",
+                    }}
                   >
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 24 24"
-                      fill={isLiked ? "#FF4B91" : "#8b8c8f"}
-                      className="transition-colors duration-300"
-                    >
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                    </svg>
-                  </motion.button>
+                    좋아요
+                  </span>
+                </motion.button>
 
-                  {/* 민트 엄지 버튼 */}
-                  <motion.button
-                    onClick={() => setIsThumbUp(!isThumbUp)}
-                    whileTap={{ scale: 0.9 }}
-                    className="flex flex-col items-center gap-1"
+                {/* 추천 버튼 (카운트 포함) */}
+                <motion.button
+                  onClick={handleRecommend}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    backdropFilter: "blur(12px)",
+                    padding: "8px 16px",
+                    borderRadius: "99px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
+                    border: "none",
+                  }}
+                >
+                  <ThumbsUp
+                    size={18}
+                    color={isThumbUp ? "#4FD1C5" : "#ffffff"}
+                    fill={isThumbUp ? "#4FD1C5" : "transparent"}
+                    style={{ transition: "all 0.3s" }}
+                  />
+                  <span
+                    style={{
+                      color: "#ffffff",
+                      fontWeight: "700",
+                      fontSize: "0.8rem",
+                    }}
                   >
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 24 24"
-                      fill={isThumbUp ? "#4FD1C5" : "#8b8c8f"}
-                      className="transition-colors duration-300"
-                    >
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                    </svg>
-                  </motion.button>
-                </div>
+                    추천
+                  </span>
+                  <span
+                    style={{
+                      color: "#ffffff",
+                      fontWeight: "900",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {recommendCount}
+                  </span>
+                </motion.button>
               </div>
             </motion.div>
           </>
