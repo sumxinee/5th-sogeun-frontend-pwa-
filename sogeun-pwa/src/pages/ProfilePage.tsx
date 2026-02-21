@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import SearchPage from "./SearchPage";
+import type { Track } from "./SearchPage";
 import "../index.css";
 import musicPlanetIcon from "../assets/logo.png";
 
@@ -67,13 +69,31 @@ export default function ProfilePage() {
       "https://images.unsplash.com/photo-1459749411177-287ce3288b71?w=150",
     ],
   };
+  const [searchInitialTab, setSearchInitialTab] = useState<"search" | "likes">(
+    "search",
+  );
+  // "더보기" 전용 클릭 핸들러
+  const handleOpenLikes = () => {
+    setSearchInitialTab("likes"); // 좋아요 탭으로 설정
+    setIsSearchOpen(true); // 검색창 열기
+  };
 
+  // 중앙 행성 버튼 클릭 핸들러 (기본 검색으로 열기)
+  const handleOpenSearch = () => {
+    setSearchInitialTab("search"); // 검색 탭으로 설정
+    setIsSearchOpen(true);
+  };
   const progressPercent = (userData.likesCurrent / userData.likesMax) * 100;
+
+  // 검색창에서 노래를 선택했을 때의 로직 (필요 시 작성)
+  const handleSelectTrack = (track: Track) => {
+    console.log("선택된 트랙:", track);
+    setIsSearchOpen(false); // 선택 후 창 닫기
+  };
 
   const handleSongClick = () => {
     navigate("/profile/edit/song");
   };
-
   return (
     <div
       className="clean-profile-bg"
@@ -83,6 +103,7 @@ export default function ProfilePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        minHeight: "100vh", // 전체 화면 보장
         background:
           "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
       }}
@@ -312,6 +333,7 @@ export default function ProfilePage() {
             좋아요 누른 노래
           </h3>
           <span
+            onClick={handleOpenLikes}
             style={{
               fontSize: "11px",
               fontWeight: "500",
@@ -319,6 +341,7 @@ export default function ProfilePage() {
               margin: 3,
               cursor: "pointer",
               opacity: 0.9,
+              textDecoration: "underline",
             }}
           >
             더보기
@@ -368,6 +391,30 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
-    </div>
+      {/* 8. 검색 페이지 오버레이 */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[200] pointer-events-auto"
+            style={{
+              background:
+                "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
+              backgroundAttachment: "fixed",
+            }}
+          >
+            <SearchPage
+              initialTab={searchInitialTab}
+              onBack={() => setIsSearchOpen(false)}
+              onPlayMusic={(url) => console.log("Play:", url)}
+              onSelectTrack={handleSelectTrack}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

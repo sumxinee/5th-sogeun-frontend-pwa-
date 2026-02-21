@@ -7,6 +7,8 @@ import {
   useTransform,
   type PanInfo,
 } from "framer-motion";
+import { useAtom } from "jotai";
+import { accessTokenAtom } from "../store/auth";
 import "../index.css";
 
 // 1. 트랙 정보 인터페이스
@@ -18,10 +20,22 @@ export interface Track {
   previewUrl: string;
 }
 
+export interface ServerLikeItem {
+  id?: number;
+  trackId?: number;
+  musicName?: string;
+  title?: string;
+  artistName?: string;
+  artist?: string;
+  artworkUrl: string;
+  previewUrl: string;
+}
+
 interface SearchPageProps {
   onBack: () => void;
   onPlayMusic: (url: string) => void;
   onSelectTrack: (track: Track) => void;
+  initialTab?: "search" | "likes";
 }
 
 // 슬라이드 애니메이션 설정
@@ -41,19 +55,51 @@ const slideVariants = {
     opacity: 0,
   }),
 };
+const api = axios.create({
+  baseURL: "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean",
+});
 
 const SearchPage: React.FC<SearchPageProps> = ({
   onBack,
   onPlayMusic,
   onSelectTrack,
+  initialTab = "search",
 }) => {
-  const [activeTab, setActiveTab] = useState<"search" | "likes">("search");
+  const [activeTab, setActiveTab] = useState<"search" | "likes">(initialTab);
   const [direction, setDirection] = useState(0);
   const [query, setQuery] = useState("");
 
   const [results, setResults] = useState<Track[]>([]);
   const [limit, setLimit] = useState(20);
   const [likedTracks, setLikedTracks] = useState<Track[]>([]);
+
+  const [token] = useAtom(accessTokenAtom);
+
+  React.useEffect(() => {
+    const fetchLikedTracks = async () => {
+      if (!token) return;
+      try {
+        const res = await api.get(`/api/library/likes`, {
+          headers: { Authorization: `Bearer ${token}` }, // 토큰 헤더 추가
+        });
+        // 백엔드 데이터를 프론트 포맷으로 맞추기
+        const mappedLikes: Track[] = res.data.map(
+          (item: ServerLikeItem, index: number) => ({
+            trackId: item.id || item.trackId || index,
+            trackName: item.musicName || item.title,
+            artistName: item.artistName || item.artist,
+            artworkUrl100: item.artworkUrl,
+            previewUrl: item.previewUrl,
+          }),
+        );
+        setLikedTracks(mappedLikes);
+      } catch (err) {
+        console.error("좋아요 목록을 불러오는 데 실패했습니다.", err);
+      }
+    };
+
+    if (activeTab === "likes") fetchLikedTracks();
+  }, [activeTab, token]);
 
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
   // 스크롤 컨테이너를 잡기 위한 ref
@@ -148,12 +194,42 @@ const SearchPage: React.FC<SearchPageProps> = ({
 
   // 트랙 최종 선택
 
-  const toggleLike = (track: Track) => {
+  const toggleLike = async (track: Track) => {
+    if (!token) return;
+    const isLiked = likedTracks.some((t) => t.trackId === track.trackId);
+
     setLikedTracks((prev) =>
-      prev.some((t) => t.trackId === track.trackId)
+      isLiked
         ? prev.filter((t) => t.trackId !== track.trackId)
         : [track, ...prev],
     );
+
+    // 서버에 토글(POST) 요청 보내기
+    try {
+      await api.post(
+        "/api/update/music/likes",
+        {
+          music: {
+            trackId: track.trackId,
+            title: track.trackName, // 이름 변경 매핑!
+            artist: track.artistName, // 이름 변경 매핑!
+            artworkUrl: track.artworkUrl100, // 이름 변경 매핑!
+            previewUrl: track.previewUrl,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      console.log("좋아요 상태 서버 전송 성공!");
+    } catch (err) {
+      console.error("좋아요 처리에 실패했습니다.", err);
+      // 만약 서버 요청이 실패하면(예: 네트워크 오류), 다시 원래 상태로 롤백해주는 로직을 넣으면 더 완벽합니다.
+      setLikedTracks((prev) =>
+        isLiked
+          ? [track, ...prev]
+          : prev.filter((t) => t.trackId !== track.trackId),
+      );
+      alert("좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
   // [1] 앨범 커버 클릭 시: 음악 재생 & 이퀄라이저 표시 (뒤로가기 X)
   const handleAlbumClick = (e: React.MouseEvent, track: Track) => {
@@ -289,10 +365,10 @@ const SearchPage: React.FC<SearchPageProps> = ({
         <div className="w-full flex justify-between items-center mb-6">
           <button
             onClick={onBack}
-            className="bg-white/20 p-3 rounded-full border border-white/30 backdrop-blur-md shadow-sm"
+            className="bg-white/20 p-3 rounded-full border border-white/30"
           >
-            <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
-              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+            <svg className="w-8 h-8 fill-white" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
             </svg>
           </button>
 
@@ -340,7 +416,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
             className="flex-1 flex flex-col overflow-hidden px-6 w-full"
           >
             {/* 검색창 */}
-            <div className="flex items-center bg-white/50 h-[52px] rounded-[20px] px-5 border border-white/40 mb-6 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
+            <div className="flex items-center bg-white/50 h-[52px] rounded-[20px] px-5 border border-white/40 mb-0.8 backdrop-blur-md shadow-sm focus-within:bg-white/30 transition-all">
               <input
                 className="bg-transparent flex-1 outline-none font-medium text-[#8a8a8a] placeholder:text-[#333]/60 text-[15px]"
                 value={query}
@@ -355,10 +431,18 @@ const SearchPage: React.FC<SearchPageProps> = ({
                 검색
               </button>
             </div>
-
+            {/* 안내 멘트 추가 */}
+            <p className="text-[11px] text-white/70 font-medium py-4 ml-1 drop-shadow-sm leading-none">
+              💡 앨범 표지를 누르면 음악을 미리 들을 수 있어요. 다시 누르면
+              노래가 멈춰요!
+            </p>
             <div
               ref={scrollRef}
               className="flex-1 overflow-y-auto space-y-2 pb-24 scrollbar-hide"
+              style={{
+                msOverflowStyle: "none" /* IE, Edge */,
+                scrollbarWidth: "none" /* Firefox */,
+              }}
             >
               {results.length > 0 ? (
                 <>
