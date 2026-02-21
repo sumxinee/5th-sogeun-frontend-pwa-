@@ -4,7 +4,7 @@ import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useAtom } from "jotai"; // 1. Jotai 추가
-import { accessTokenAtom, userIdAtom } from "../store/auth"; // 토큰 아톰
+import { accessTokenAtom, numericUserIdAtom } from "../store/auth"; // 토큰 아톰
 import { locationAtom } from "../store/location"; // 기존에 있던 위치 아톰 활용
 import { currentTrackAtom, isPlayingAtom } from "../store/music";
 import type { Track } from "./SearchPage";
@@ -42,6 +42,7 @@ interface HUDCircle {
 
 interface DetectedUser {
   id: number;
+  broadcastId: number;
   name: string;
   song: string;
   artist: string;
@@ -210,12 +211,12 @@ const GPS: React.FC<GPSProps> = ({
   const [myLocation, setMyLocation] = useAtom(locationAtom); // 전역 위치 상태 사용
   const [serverUsers, setServerUsers] = useState<ServerUserData[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([]);
-  const [myUserId] = useAtom(userIdAtom);
+  const [myUserId] = useAtom(numericUserIdAtom);
   const BASE_URL =
     "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
 
   const handleRecommend = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !token) return;
     const prevThumb = isThumbUp;
     const prevCount = recommendCount;
 
@@ -224,35 +225,33 @@ const GPS: React.FC<GPSProps> = ({
     setIsThumbUp(!prevThumb);
 
     try {
-      const response = await fetch(
-        `${BASE_URL}/api/broadcast/${selectedUser.id}/like`,
+      const res = await fetch(
+        `${BASE_URL}/api/broadcast/${selectedUser.broadcastId}/like`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`, // 403 에러 방지 핵심
             "Content-Type": "application/json",
           },
         },
       );
-      if (response.ok) {
-        if (!isThumbUp) {
-          setRecommendCount((prev: number) => prev + 1);
-        } else {
-          setRecommendCount((prev: number) => prev - 1);
-        }
-        setIsThumbUp(!isThumbUp);
-      }
+
+      if (!res.ok) throw new Error("추천 서버 응답 에러");
+      console.log("👍 추천 성공");
     } catch (error) {
-      console.error("추천 통신 실패:", error);
+      // 실패 시 롤백
+      setIsThumbUp(prevThumb);
+      setRecommendCount(prevCount);
+      console.error("추천 실패:", error);
     }
   };
   // ✅ 2. 좋아요(하트) 버튼 클릭 시 서버 전송 함수 (검색창/라이브러리 동기화)
   const handleLikeToggle = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !token) return;
     const prevLiked = isLiked;
     setIsLiked(!prevLiked); // UI 즉시 업데이트
     try {
-      const response = await fetch(`${BASE_URL}/api/update/music/likes`, {
+      const res = await fetch(`${BASE_URL}/api/update/music/likes`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -266,20 +265,68 @@ const GPS: React.FC<GPSProps> = ({
         }),
       });
 
-      if (response.ok) {
-        setIsLiked(!isLiked); // 하트 색상 변경
-      }
+      if (!res.ok) throw new Error("서버 저장 실패");
+      console.log("🎵 좋아요 페이지에 반영되었습니다.");
     } catch (error) {
+      setIsLiked(prevLiked);
       console.error("좋아요 통신 실패:", error);
     }
   };
+  // 명세서 기반 API 호출 함수들
+  const broadcastAPI = {
+    // 음악 송출 ON
+    on: async (token: string) =>
+      fetch(`${BASE_URL}/api/broadcast/on`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+
+    // 음악 송출 OFF
+    off: async (token: string) =>
+      fetch(`${BASE_URL}/api/broadcast/off`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+
+    // 송출 중인 노래 변경
+    changeMusic: async (token: string, musicData: any) =>
+      fetch(`${BASE_URL}/api/broadcast/changemusic`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(musicData),
+      }),
+  };
   // selectedUser가 바뀔 때마다 해당 유저의 추천 정보를 가져오는 로직 추가
   useEffect(() => {
-    if (selectedUser) {
-      // 예시: 실제로는 유저 상세 정보를 가져오는 API가 있다면 사용
-      // setRecommendCount(selectedUser.likeCount || 0);
-    }
-  }, [selectedUser]);
+    const checkInitialLikeStatus = async () => {
+      if (!selectedUser || !token) return;
+
+      try {
+        // 명세서의 '유저가 좋아요한 노래 리스트' API 호출
+        const res = await fetch(`${BASE_URL}/api/library/likes`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const likedList = await res.json();
+
+        // 현재 선택된 유저의 노래가 내 좋아요 리스트에 있는지 확인
+        const isAlreadyLiked = likedList.some(
+          (item: any) =>
+            item.musicName === selectedUser.song &&
+            item.artistName === selectedUser.artist,
+        );
+
+        setIsLiked(isAlreadyLiked);
+        // 추천수도 서버 데이터가 있다면 여기서 setRecommendCount 해주면 유지됩니다.
+      } catch (err) {
+        console.error("초기 상태 로딩 실패:", err);
+      }
+    };
+
+    checkInitialLikeStatus();
+  }, [selectedUser, token]);
 
   const toggleBottomSheetMusic = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -362,7 +409,58 @@ const GPS: React.FC<GPSProps> = ({
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
   //----------------------------------------------------------
-  //---------------------------sse---------------------------
+  useEffect(() => {
+    if (!token) return;
+    const ctrl = new AbortController();
+
+    const connectStream = async () => {
+      try {
+        await fetchEventSource(`${BASE_URL}/api/sse/stream`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+          },
+
+          signal: ctrl.signal,
+          onopen: async (res) => {
+            if (res.ok) {
+              console.log("📡 스트림 연결 성공");
+              // 약간의 딜레이를 주어 서버가 세션을 완전히 잡을 시간을 줍니다.
+              setTimeout(async () => {
+                try {
+                  const onRes = await broadcastAPI.on(token);
+                  if (onRes.status === 500) {
+                    console.error(
+                      "서버 내부 에러: 방송 송출을 시작할 수 없습니다.",
+                    );
+                  } else {
+                    console.log("📻 방송 송출 시작 (ON)");
+                  }
+                } catch (e) {
+                  console.error("ON 호출 실패", e);
+                }
+              }, 500);
+            }
+          },
+          onmessage: (event) => {
+            if (event.data !== "heartbeat") {
+              console.log("📻 방송 스트림 수신:", JSON.parse(event.data));
+            }
+          },
+        });
+      } catch (err) {
+        console.error("Stream 에러:", err);
+      }
+    };
+
+    connectStream();
+    return () => {
+      broadcastAPI.off(token);
+      ctrl.abort();
+    };
+  }, [token]);
+  //--------------------------- sse- nearby --------------------------
 
   useEffect(() => {
     // 1. 숫자로 변환 (NaN 방지 및 백엔드 타입 일치)
@@ -373,10 +471,14 @@ const GPS: React.FC<GPSProps> = ({
     const isTokenValid = !!token;
 
     if (!isIdValid || !isTokenValid || !isLocationValid) {
-      console.log("⏳ SSE 대기 중...", { numericUserId, isLocationValid });
+      console.log("⏳ SSE 대기 중...", {
+        numericUserId,
+        isLocationValid,
+        isTokenValid,
+      });
       return;
     }
-    const sseEndpoint = `${BASE_URL}/sse/location/nearby?userId=${numericUserId}&lat=${myLocation!.lat}&lon=${myLocation!.lon}`;
+    const sseEndpoint = `${BASE_URL}/api/sse/location/nearby?userId=${numericUserId}&lat=${myLocation!.lat}&lon=${myLocation!.lon}`;
     const ctrl = new AbortController();
 
     const connectSSE = async () => {
@@ -419,13 +521,13 @@ const GPS: React.FC<GPSProps> = ({
 
     connectSSE();
     return () => ctrl.abort(); // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
-  }, [token, myLocation?.lat, myLocation?.lon]); // 3. 토큰과 위치를 의존성에 추가
+  }, [token, myLocation?.lat, myLocation?.lon, myUserId]); // 3. 토큰과 위치를 의존성에 추가
 
   useEffect(() => {
     console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
   }, []);
 
-  // ------------------- [기능 2: 내 위치 추적 및 서버 전송 (POST)] -------------------
+  // ------------------- [기능 2: 내 위치 추적 및 서버 전송 update (POST)] -------------------
   useEffect(() => {
     if (!("geolocation" in navigator)) {
       console.error("이 브라우저는 위치 정보를 지원하지 않습니다.");
@@ -451,7 +553,7 @@ const GPS: React.FC<GPSProps> = ({
             return;
           }
           // 2. URL 파라미터 구성 (userId만 포함하는 것이 가장 깔끔함)
-          const url = `${BASE_URL}/sse/location/update?userId=${numericUserId}`;
+          const url = `${BASE_URL}/api/sse/location/update?userId=${numericUserId}`;
 
           fetch(url, {
             method: "POST",
@@ -483,6 +585,7 @@ const GPS: React.FC<GPSProps> = ({
     // 1. 레이더에 항상 띄울 목데이터 정의
     const mockUser: DetectedUser = {
       id: 999,
+      broadcastId: 998,
       name: "홍익대학교 동기",
       song: "Ditto",
       artist: "NewJeans",
@@ -507,6 +610,7 @@ const GPS: React.FC<GPSProps> = ({
 
       return {
         id: user.id,
+        broadcastId: user.id,
         name: user.nickname,
         song: user.musicName,
         artist: user.artistName,
@@ -564,6 +668,7 @@ const GPS: React.FC<GPSProps> = ({
 
       return {
         id: user.id,
+        broadcastId: user.id,
         name: user.nickname,
         song: user.musicName,
         artist: user.artistName,

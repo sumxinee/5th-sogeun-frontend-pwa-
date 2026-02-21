@@ -6,6 +6,7 @@ import "../index.css"; // 전역 CSS 불러오기
 import { useSetAtom } from "jotai";
 import { accessTokenAtom } from "../store/auth";
 import { userIdAtom } from "../store/auth";
+import { jwtDecode } from "jwt-decode";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -57,16 +58,27 @@ export default function AuthPage() {
       if (response.status === 200 || response.status === 201) {
         console.log("🎉 로그인 성공!", response.data);
 
-        const { accessToken, userId } = response.data;
+        const { accessToken } = response.data;
+
         if (accessToken) {
           setAccessToken(accessToken);
-          if (accessToken && userId) {
-            setAccessToken(accessToken);
-            setUserId(userId); // ✅ 서버가 준 '진짜 숫자'를 저장해야 배포 후에도 작동함
-            localStorage.setItem("userId", String(userId));
-          } else {
-            console.error("서버 응답에 userId가 없습니다. 백엔드 확인 필요!");
+
+          try {
+            // 토큰 해독 (토큰 안에 'id'나 'userId' 필드가 있다고 가정)
+            const decoded: any = jwtDecode(accessToken);
+            const extractedUserId = decoded.id || decoded.userId || decoded.sub;
+
+            if (extractedUserId) {
+              setUserId(String(extractedUserId));
+              localStorage.setItem("userId", String(extractedUserId));
+              console.log("토큰에서 추출한 userId:", extractedUserId);
+            } else {
+              console.error("토큰 내부에 유저 식별 정보가 없습니다.");
+            }
+          } catch (decodeError) {
+            console.error("토큰 해독 실패:", decodeError);
           }
+
           alert("소근에 오신 것을 환영해요!");
           navigate("/gps");
         }
