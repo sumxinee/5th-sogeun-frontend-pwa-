@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import '../index.css';
 
 // SVG 아이콘
@@ -20,11 +19,19 @@ const Icons = {
 export default function ProfileEditPage() {
   const navigate = useNavigate();
   
-  // 초기값은 실제 유저 정보가 있다면 그걸로 설정 (예: useEffect로 받아온 값)
-  const [nickname, setNickname] = useState('music_cat');
+  const [nickname, setNickname] = useState('음악듣는고양이');
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 1. 컴포넌트가 처음 열릴 때 localStorage에서 저장된 정보 불러오기
+  useEffect(() => {
+    const savedNickname = localStorage.getItem('profile_nickname');
+    const savedImage = localStorage.getItem('profile_image');
+
+    if (savedNickname) setNickname(savedNickname);
+    if (savedImage) setPreviewUrl(savedImage);
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -39,42 +46,38 @@ export default function ProfileEditPage() {
     fileInputRef.current?.click();
   };
 
+  // 파일을 Base64 문자열로 변환하는 헬퍼 함수
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleSubmit = async () => {
-    // 1. 유효성 검사
+    // 유효성 검사
     if (!nickname.trim()) {
       alert("닉네임을 입력해주세요!");
       return;
     }
 
     try {
-      // 2. FormData 객체 생성
-      const formData = new FormData();
-      
-      // 백엔드 명세서에 맞춘 키 값 설정 (보통 'nickname', 'image' 등을 사용)
-      formData.append('nickname', nickname); 
-      
+      // 2. 닉네임 로컬 스토리지에 저장
+      localStorage.setItem('profile_nickname', nickname);
+
+      // 3. 이미지가 변경되었다면 Base64로 변환하여 로컬 스토리지에 저장
       if (profileImage) {
-        // 'profileImage'는 백엔드가 정한 파일 키 이름이어야 합니다. (다를 경우 수정 필요)
-        formData.append('profileImage', profileImage); 
+        const base64Image = await convertToBase64(profileImage);
+        localStorage.setItem('profile_image', base64Image);
       }
 
-      // 3. 서버 전송 (API 주소는 백엔드 명세에 따라 수정 필요)
-      const response = await axios.patch('/api/members/profile', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data', // 파일 전송 필수 헤더
-          // 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` // 토큰 필요시 주석 해제
-        },
-      });
-
-      if (response.status === 200) {
-        console.log('수정 성공:', response.data);
-        alert('프로필이 수정되었습니다!');
-        navigate('/gps');
-      }
-
+      alert('프로필이 수정되었습니다!');
+      navigate('/gps'); // 성공 시 이동
     } catch (error) {
-      console.error('프로필 수정 실패:', error);
-      alert('프로필 수정 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error('프로필 저장 실패:', error);
+      alert('프로필 수정 중 오류가 발생했습니다.');
     }
   };
 
@@ -98,7 +101,7 @@ export default function ProfileEditPage() {
       <div className="profile-edit-section" style={{ marginTop: '50px', marginBottom: '40px' }}>
         <div className="profile-image-circle" onClick={handleProfileClick}>
           {previewUrl ? (
-            <img src={previewUrl} alt="프로필 미리보기" />
+            <img src={previewUrl} alt="프로필 미리보기" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <Icons.DefaultProfile />
           )}
