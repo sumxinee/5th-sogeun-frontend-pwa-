@@ -48,7 +48,7 @@ const SongEditPage: React.FC = () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-anyㅂ
       const mappedTracks: Track[] = res.data.results.map((item: any) => ({
         trackId: item.trackId,
         trackName: item.trackName,

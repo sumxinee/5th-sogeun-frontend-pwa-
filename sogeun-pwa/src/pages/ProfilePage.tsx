@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchPage from "./SearchPage";
@@ -9,16 +9,7 @@ import musicPlanetIcon from "../assets/logo.png";
 // ------------------- [아이콘 컴포넌트] -------------------
 const Icons = {
   Pin: () => (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
       <circle cx="12" cy="10" r="3"></circle>
     </svg>
@@ -29,75 +20,49 @@ const Icons = {
     </svg>
   ),
   Home: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-7 w-7"
-      width="28"
-      height="28"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
   ),
   Plus: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-9 w-9 text-white"
-      width="36"
-      height="36"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="white"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={3}
-        d="M12 4v16m8-8H4"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-white" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="white">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
     </svg>
   ),
   Profile: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-7 w-7"
-      width="28"
-      height="28"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   ),
 };
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  // 더미 데이터
+
+  // 1. 상태(State) 생성: 기본값은 기존 더미 데이터
+  const [nickname, setNickname] = useState("음악듣는고양이");
+  const [profileImg, setProfileImg] = useState(
+    "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+  );
+
+  // 2. useEffect: 컴포넌트가 마운트될 때 localStorage에서 데이터 불러오기
+  useEffect(() => {
+    const savedNickname = localStorage.getItem("profile_nickname");
+    const savedImage = localStorage.getItem("profile_image");
+
+    if (savedNickname) setNickname(savedNickname);
+    if (savedImage) setProfileImg(savedImage);
+  }, []);
+
+  // 3. 렌더링에 사용할 데이터 묶음 (상태값 적용)
   const userData = {
     handle: "music_cat",
-    nickname: "음악듣는고양이",
+    nickname: nickname, // 상태값 연결
     level: 7,
     likesCurrent: 24,
     likesMax: 30,
     location: "123m 떨어져 있어요",
-
-    profileImg:
-      "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    profileImg: profileImg, // 상태값 연결
     likedSongs: [
       "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=150",
       "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=150",
@@ -130,16 +95,7 @@ export default function ProfilePage() {
     navigate("/profile/edit/song");
   };
   return (
-    // 전체 배경을 감싸는 div
-    <motion.div
-      // 1. 초기 상태 (화면 밖/투명)
-      initial={{ opacity: 0, x: 20 }}
-      // 2. 등장 상태 (정상 위치)
-      animate={{ opacity: 1, x: 0 }}
-      // 3. 페이지를 나갈 때 상태 (선택 사항)
-      exit={{ opacity: 0, x: -20 }}
-      // 4. 애니메이션 속도 및 느낌 설정
-      transition={{ duration: 0.4, ease: "easeOut" }}
+    <div
       className="clean-profile-bg"
       style={{
         paddingTop: "60px",
@@ -184,6 +140,7 @@ export default function ProfilePage() {
             borderRadius: "50%",
             border: "3px solid #FFFFFF",
             boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+            overflow: "hidden", // 이미지가 동그라미를 벗어나지 않게 추가
           }}
         >
           <img
@@ -332,7 +289,6 @@ export default function ProfilePage() {
 
       {/* 5. 레벨 카드 */}
       <div className="level-card">
-        {/* 헤더 */}
         <div className="level-header">
           <span>레벨 {userData.level}</span>
           <span style={{ color: "#FFFFFF" }}>
@@ -340,9 +296,7 @@ export default function ProfilePage() {
           </span>
         </div>
 
-        {/* 진행 바 배경 (회색 트랙) */}
         <div className="progress-bar-bg">
-          {/* 진행 바 채우기 (여기가 반짝이는 부분!) */}
           <div
             className="shiny-bar"
             style={{
@@ -351,7 +305,6 @@ export default function ProfilePage() {
           ></div>
         </div>
 
-        {/* 푸터 */}
         <div className="level-footer">
           다음 레벨까지 {userData.likesMax - userData.likesCurrent} likes 남음
         </div>
@@ -395,7 +348,6 @@ export default function ProfilePage() {
           </span>
         </div>
 
-        {/* 앨범 리스트 컨테이너 */}
         <div className="liked-songs-container">
           <div className="song-list-row">
             {userData.likedSongs.map((src, index) => (
@@ -404,8 +356,6 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-
-          {/* 유리 바 */}
           <div className="glass-bar"></div>
         </div>
       </div>
@@ -413,7 +363,6 @@ export default function ProfilePage() {
       {/* 7. 하단 내비게이션 */}
       <div className="fixed bottom-0 left-0 w-full flex flex-col items-center z-[120] pointer-events-none pb-10">
         <div className="pointer-events-auto w-[88%] h-[75px] bg-white/95 backdrop-blur-3xl rounded-[38px] flex justify-between items-center px-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] relative">
-          {/* 홈 버튼 */}
           <button
             onClick={() => navigate("/gps")}
             className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
@@ -422,24 +371,20 @@ export default function ProfilePage() {
             <span className="text-[10px] font-bold mt-1">홈</span>
           </button>
 
-          {/* 중앙 버튼 */}
           <div className="absolute left-1/2 -translate-x-1/2 -top-14">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={handleOpenSearch}
               className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
             >
               <img
                 src={musicPlanetIcon}
                 alt="Music Planet"
-                // 이미지에 드롭 섀도우를 줘서 입체감 추가
                 className="w-full h-full object-contain drop-shadow-xl"
               />
             </motion.button>
           </div>
 
-          {/* 내 정보 버튼 */}
           <button className="flex flex-col items-center text-[#FF4B6E]">
             <Icons.Profile />
             <span className="text-[10px] font-bold mt-1">나</span>
