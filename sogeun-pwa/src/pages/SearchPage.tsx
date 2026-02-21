@@ -7,6 +7,8 @@ import {
   useTransform,
   type PanInfo,
 } from "framer-motion";
+import { useAtom } from "jotai";
+import { accessTokenAtom } from "../store/auth";
 import "../index.css";
 
 // 1. 트랙 정보 인터페이스
@@ -15,6 +17,17 @@ export interface Track {
   trackName: string;
   artistName: string;
   artworkUrl100: string;
+  previewUrl: string;
+}
+
+export interface ServerLikeItem {
+  id?: number;
+  trackId?: number;
+  musicName?: string;
+  title?: string;
+  artistName?: string;
+  artist?: string;
+  artworkUrl: string;
   previewUrl: string;
 }
 
@@ -42,6 +55,9 @@ const slideVariants = {
     opacity: 0,
   }),
 };
+const api = axios.create({
+  baseURL: "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean",
+});
 
 const SearchPage: React.FC<SearchPageProps> = ({
   onBack,
@@ -55,13 +71,35 @@ const SearchPage: React.FC<SearchPageProps> = ({
 
   const [results, setResults] = useState<Track[]>([]);
   const [limit, setLimit] = useState(20);
-  const [likedTracks, setLikedTracks] = useState<Track[]>(() => {
-    const saved = localStorage.getItem("myLikedTracks");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [likedTracks, setLikedTracks] = useState<Track[]>([]);
+
+  const [token] = useAtom(accessTokenAtom);
+
   React.useEffect(() => {
-    localStorage.setItem("myLikedTracks", JSON.stringify(likedTracks));
-  }, [likedTracks]);
+    const fetchLikedTracks = async () => {
+      if (!token) return;
+      try {
+        const res = await api.get(`/api/library/likes`, {
+          headers: { Authorization: `Bearer ${token}` }, // 토큰 헤더 추가
+        });
+        // 백엔드 데이터를 프론트 포맷으로 맞추기
+        const mappedLikes: Track[] = res.data.map(
+          (item: ServerLikeItem, index: number) => ({
+            trackId: item.id || item.trackId || index,
+            trackName: item.musicName || item.title,
+            artistName: item.artistName || item.artist,
+            artworkUrl100: item.artworkUrl,
+            previewUrl: item.previewUrl,
+          }),
+        );
+        setLikedTracks(mappedLikes);
+      } catch (err) {
+        console.error("좋아요 목록을 불러오는 데 실패했습니다.", err);
+      }
+    };
+
+    if (activeTab === "likes") fetchLikedTracks();
+  }, [activeTab, token]);
 
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
   // 스크롤 컨테이너를 잡기 위한 ref
@@ -156,12 +194,42 @@ const SearchPage: React.FC<SearchPageProps> = ({
 
   // 트랙 최종 선택
 
-  const toggleLike = (track: Track) => {
+  const toggleLike = async (track: Track) => {
+    if (!token) return;
+    const isLiked = likedTracks.some((t) => t.trackId === track.trackId);
+
     setLikedTracks((prev) =>
-      prev.some((t) => t.trackId === track.trackId)
+      isLiked
         ? prev.filter((t) => t.trackId !== track.trackId)
         : [track, ...prev],
     );
+
+    // 서버에 토글(POST) 요청 보내기
+    try {
+      await api.post(
+        "/api/update/music/likes",
+        {
+          music: {
+            trackId: track.trackId,
+            title: track.trackName, // 이름 변경 매핑!
+            artist: track.artistName, // 이름 변경 매핑!
+            artworkUrl: track.artworkUrl100, // 이름 변경 매핑!
+            previewUrl: track.previewUrl,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      console.log("좋아요 상태 서버 전송 성공!");
+    } catch (err) {
+      console.error("좋아요 처리에 실패했습니다.", err);
+      // 만약 서버 요청이 실패하면(예: 네트워크 오류), 다시 원래 상태로 롤백해주는 로직을 넣으면 더 완벽합니다.
+      setLikedTracks((prev) =>
+        isLiked
+          ? [track, ...prev]
+          : prev.filter((t) => t.trackId !== track.trackId),
+      );
+      alert("좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
   // [1] 앨범 커버 클릭 시: 음악 재생 & 이퀄라이저 표시 (뒤로가기 X)
   const handleAlbumClick = (e: React.MouseEvent, track: Track) => {

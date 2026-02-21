@@ -13,6 +13,7 @@ import { Heart, ThumbsUp } from "lucide-react";
 
 interface ServerUserData {
   id: number;
+  broadcastId: number;
   nickname: string;
   musicName: string;
   artistName: string;
@@ -220,9 +221,8 @@ const GPS: React.FC<GPSProps> = ({
     const prevThumb = isThumbUp;
     const prevCount = recommendCount;
 
-    if (!prevThumb) setRecommendCount(prevCount + 1);
-    else setRecommendCount(prevCount - 1);
     setIsThumbUp(!prevThumb);
+    setRecommendCount(prevThumb ? prevCount - 1 : prevCount + 1);
 
     try {
       const res = await fetch(
@@ -245,7 +245,7 @@ const GPS: React.FC<GPSProps> = ({
       console.error("추천 실패:", error);
     }
   };
-  // ✅ 2. 좋아요(하트) 버튼 클릭 시 서버 전송 함수 (검색창/라이브러리 동기화)
+  // 2. 좋아요(하트) 버튼 클릭 시 서버 전송 함수 (검색창/라이브러리 동기화)
   const handleLikeToggle = async () => {
     if (!selectedUser || !token) return;
     const prevLiked = isLiked;
@@ -258,15 +258,19 @@ const GPS: React.FC<GPSProps> = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          musicName: selectedUser.song,
-          artistName: selectedUser.artist,
-          artworkUrl: selectedUser.artworkUrl,
-          previewUrl: selectedUser.previewUrl,
+          music: {
+            trackId: selectedUser.id,
+            title: selectedUser.song,
+            artist: selectedUser.artist,
+            artworkUrl: selectedUser.artworkUrl,
+            previewUrl: selectedUser.previewUrl,
+          },
         }),
       });
 
       if (!res.ok) throw new Error("서버 저장 실패");
-      console.log("🎵 좋아요 페이지에 반영되었습니다.");
+      if (!prevLiked) console.log("💖 내 보관함에 노래가 추가되었습니다!");
+      else console.log("💔 내 보관함에서 노래가 제거되었습니다.");
     } catch (error) {
       setIsLiked(prevLiked);
       console.error("좋아요 통신 실패:", error);
@@ -305,21 +309,29 @@ const GPS: React.FC<GPSProps> = ({
       if (!selectedUser || !token) return;
 
       try {
-        // 명세서의 '유저가 좋아요한 노래 리스트' API 호출
         const res = await fetch(`${BASE_URL}/api/library/likes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const likedList = await res.json();
 
-        // 현재 선택된 유저의 노래가 내 좋아요 리스트에 있는지 확인
-        const isAlreadyLiked = likedList.some(
-          (item: any) =>
-            item.musicName === selectedUser.song &&
-            item.artistName === selectedUser.artist,
-        );
+        // 💡 [수정된 부분] 변수명이 title이든 musicName이든, trackId든 다 걸러내도록 강화!
+        const isAlreadyLiked = likedList.some((item: any) => {
+          // 1. 혹시 서버가 trackId나 id로 준다면 가장 정확한 비교!
+          const isSameId =
+            String(item.trackId || item.id) === String(selectedUser.id);
+
+          // 2. 이름으로 비교할 경우 (title/musicName 모두 허용)
+          const serverTitle = item.title || item.musicName;
+          const serverArtist = item.artist || item.artistName;
+          const isSameName =
+            serverTitle === selectedUser.song &&
+            serverArtist === selectedUser.artist;
+
+          // 둘 중 하나라도 맞으면 '이미 좋아요 한 노래'로 인정!
+          return isSameId || isSameName;
+        });
 
         setIsLiked(isAlreadyLiked);
-        // 추천수도 서버 데이터가 있다면 여기서 setRecommendCount 해주면 유지됩니다.
       } catch (err) {
         console.error("초기 상태 로딩 실패:", err);
       }
@@ -610,7 +622,7 @@ const GPS: React.FC<GPSProps> = ({
 
       return {
         id: user.id,
-        broadcastId: user.id,
+        broadcastId: user.broadcastId,
         name: user.nickname,
         song: user.musicName,
         artist: user.artistName,
