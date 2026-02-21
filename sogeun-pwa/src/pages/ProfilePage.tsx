@@ -39,11 +39,15 @@ const Icons = {
 export default function ProfilePage() {
   const navigate = useNavigate();
 
-  // 1. 상태(State) 생성: 기본값은 기존 더미 데이터
+  // 1. 상태(State) 생성
   const [nickname, setNickname] = useState("음악듣는고양이");
   const [profileImg, setProfileImg] = useState(
     "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
   );
+  
+  // 🔥 [수정됨] 검색창 열림/닫힘 상태 추가!
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchInitialTab, setSearchInitialTab] = useState<"search" | "likes">("search");
 
   // 2. useEffect: 컴포넌트가 마운트될 때 localStorage에서 데이터 불러오기
   useEffect(() => {
@@ -54,24 +58,22 @@ export default function ProfilePage() {
     if (savedImage) setProfileImg(savedImage);
   }, []);
 
-  // 3. 렌더링에 사용할 데이터 묶음 (상태값 적용)
+  // 3. 렌더링에 사용할 데이터 묶음
   const userData = {
     handle: "music_cat",
-    nickname: nickname, // 상태값 연결
+    nickname: nickname,
     level: 7,
     likesCurrent: 24,
     likesMax: 30,
     location: "123m 떨어져 있어요",
-    profileImg: profileImg, // 상태값 연결
+    profileImg: profileImg,
     likedSongs: [
       "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=150",
       "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=150",
       "https://images.unsplash.com/photo-1459749411177-287ce3288b71?w=150",
     ],
   };
-  const [searchInitialTab, setSearchInitialTab] = useState<"search" | "likes">(
-    "search",
-  );
+
   // "더보기" 전용 클릭 핸들러
   const handleOpenLikes = () => {
     setSearchInitialTab("likes"); // 좋아요 탭으로 설정
@@ -83,9 +85,10 @@ export default function ProfilePage() {
     setSearchInitialTab("search"); // 검색 탭으로 설정
     setIsSearchOpen(true);
   };
+
   const progressPercent = (userData.likesCurrent / userData.likesMax) * 100;
 
-  // 검색창에서 노래를 선택했을 때의 로직 (필요 시 작성)
+  // 검색창에서 노래를 선택했을 때의 로직
   const handleSelectTrack = (track: Track) => {
     console.log("선택된 트랙:", track);
     setIsSearchOpen(false); // 선택 후 창 닫기
@@ -94,6 +97,7 @@ export default function ProfilePage() {
   const handleSongClick = () => {
     navigate("/profile/edit/song");
   };
+
   return (
     <div
       className="clean-profile-bg"
@@ -103,7 +107,7 @@ export default function ProfilePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        minHeight: "100vh", // 전체 화면 보장
+        minHeight: "100vh",
         background:
           "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
       }}
@@ -140,7 +144,7 @@ export default function ProfilePage() {
             borderRadius: "50%",
             border: "3px solid #FFFFFF",
             boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-            overflow: "hidden", // 이미지가 동그라미를 벗어나지 않게 추가
+            overflow: "hidden",
           }}
         >
           <img
@@ -375,6 +379,7 @@ export default function ProfilePage() {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              onClick={handleOpenSearch}
               className="w-[120px] h-[120px] flex items-center justify-center rounded-full"
             >
               <img
@@ -391,6 +396,7 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+
       {/* 8. 검색 페이지 오버레이 */}
       <AnimatePresence>
         {isSearchOpen && (
@@ -415,6 +421,6 @@ export default function ProfilePage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div> /* 🔥 [수정됨] 맨 끝 닫는 태그를 </motion.div>에서 </div>로 수정! */
   );
 }
