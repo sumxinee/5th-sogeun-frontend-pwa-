@@ -217,7 +217,7 @@ const GPS: React.FC<GPSProps> = ({
   const [myUserId] = useAtom(numericUserIdAtom);
   const BASE_URL = "https://sogeun.cloud";
 
-  const MAX_RADAR_DIST = 350;
+  const MAX_RADAR_DIST = 380;
   const RADAR_UI_RADIUS = 250;
 
   const handleRecommend = async () => {
@@ -369,9 +369,9 @@ const GPS: React.FC<GPSProps> = ({
       id: i,
       top: `${Math.random() * 100}%`,
       left: `${Math.random() * 100}%`,
-      size: Math.random() * 6 + 2,
-      opacity: Math.random() * 0.7 + 0.4,
-      duration: Math.random() * 20 + 20,
+      size: Math.random() * 8 + 3,
+      opacity: Math.random() * 0.6 + 0.4,
+      duration: Math.random() * 20 + 30,
     })),
   );
 
@@ -424,19 +424,19 @@ const GPS: React.FC<GPSProps> = ({
   // 5. 심장박동 Path
 
   const tripleHeartbeatPath =
-    "M -250 50 L 15 50 " +
-    // 첫 번째 파동 (모양 유지)
-    "L 20 35 L 25 60 L 35 15 L 45 85 L 50 50 " +
-    // 2. 첫 번째 간격 (더 넓게: 25px -> 60px 간격으로 늘림)
-    "L 110 50 " +
-    // 두 번째 파동 (넓어진 간격에 맞춰서 좌표 이동)
-    "L 115 35 L 120 60 L 130 15 L 140 85 L 145 50 " +
-    // 3. 두 번째 간격 (더 넓게: 25px -> 60px 간격으로 늘림)
-    "L 205 50 " +
-    // 세 번째 파동 (넓어진 간격에 맞춰서 좌표 이동)
-    "L 210 35 L 215 60 L 225 15 L 235 85 L 240 50 " +
-    // 4. 오른쪽 끝 일직선 (더 길게: 350 -> 550으로 늘림)
-    "L 500 50";
+    "M -200 50 L 35 50 " +
+    // 첫 번째 파동 (높이 25~75 유지)
+    "L 40 40 L 45 60 L 55 25 L 65 75 L 70 50 " +
+    // 2. 파동 사이 간격 축소 (기존 60px -> 35px 정도로 좁힘)
+    "L 105 50 " +
+    // 두 번째 파동 (간격에 맞춰 X축 좌표 당김)
+    "L 110 40 L 115 60 L 125 25 L 135 75 L 140 50 " +
+    // 2. 파동 사이 간격 축소
+    "L 175 50 " +
+    // 세 번째 파동 (간격에 맞춰 X축 좌표 당김)
+    "L 180 40 L 185 60 L 195 25 L 205 75 L 210 50 " +
+    // 3. 오른쪽 끝 직선 길이를 더 길게 연장 (L 500 -> 650)
+    "L 300 50";
   //----------------------------------------------------------
   useEffect(() => {
     if (!token) return;
@@ -771,12 +771,15 @@ const GPS: React.FC<GPSProps> = ({
               left: p.left,
               width: p.size,
               height: p.size,
+              opacity: p.opacity,
+              filter: `blur(${p.size / 4}px)`,
               boxShadow: `0 0 ${p.size * 3}px rgba(255,255,255,0.7)`,
             }}
             animate={{
-              y: [0, -60, 0],
-              x: [0, 25, 0],
-              opacity: [p.opacity, p.opacity * 0.1, p.opacity],
+              y: [0, Math.random() * -100 - 50, 0],
+              x: [0, Math.random() * 50 - 25, 0],
+              opacity: [p.opacity, p.opacity * 0.3, p.opacity],
+              scale: [1, 1.2, 1],
             }}
             transition={{
               duration: p.duration,
@@ -803,7 +806,7 @@ const GPS: React.FC<GPSProps> = ({
       {/* 3. 메인 레이더 */}
       <div className="relative flex items-center justify-center w-full max-w-[300px] aspect-square my-8">
         {/* ① 100m ~ 500m 고정 배경 링 (과녁판) */}
-        {[100, 200, 300, 400, 500].map((dist) => {
+        {[100, 200, 300, 400].map((dist) => {
           const r = (dist / MAX_RADAR_DIST) * RADAR_UI_RADIUS; // 거리별 픽셀 반지름
           return (
             <div
@@ -1001,7 +1004,7 @@ const GPS: React.FC<GPSProps> = ({
           ))}
           {/* 1-1. 심장 박동처럼 바운스하는 실제 핑크 원 */}
           <motion.div
-            className="w-full h-full rounded-full border-[4px] border-[#f8c6e7] shadow-[0_0_20px_rgba(255,176,205,0.8),inset_0_0_20px_rgba(255,176,205,0.8)]"
+            className="w-full h-full rounded-full border-[4px] border-[#fdb3e4] shadow-[0_0_20px_rgba(255,176,205,0.8),inset_0_0_20px_rgba(255,176,205,0.8)]"
             animate={{
               scale: [1, 1.05, 1, 1.02, 1], // 크기 변화: 두근(크게) - 두근(작게) - 휴식
               opacity: [0.8, 1, 0.85, 1, 0.8], // 커질 때 빛 번짐(투명도)도 살짝 밝아지게 디테일 추가!
@@ -1043,10 +1046,10 @@ const GPS: React.FC<GPSProps> = ({
                   opacity: [0.8, 1, 0.85, 1, 0.8],
                 }}
                 transition={{
-                  duration: 5,
+                  duration: 8,
                   repeat: Infinity,
-                  times: [0, 0.45, 0.6, 1],
-                  ease: "easeInOut",
+                  times: [0, 0.2, 0.8, 1],
+                  ease: "linear",
                 }}
               />
             </svg>
