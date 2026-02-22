@@ -55,6 +55,7 @@ interface DetectedUser {
   radius: number;
   previewUrl: string;
   artworkUrl: string;
+  profileImg?: string;
 }
 
 interface Particle {
@@ -421,8 +422,6 @@ const GPS: React.FC<GPSProps> = ({
   ];
 
   // 5. 심장박동 Path
-  const centeredPath =
-    "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
   const tripleHeartbeatPath =
     "M -250 50 L 15 50 " +
@@ -1287,8 +1286,12 @@ const GPS: React.FC<GPSProps> = ({
                 <div className="w-24 h-24 rounded-full mb-6 shadow-inner overflow-hidden border-2 border-white">
                   {selectedUser.artworkUrl && (
                     <img
-                      src={selectedUser.artworkUrl}
+                      src={`https://api.sogeun.com/storage/profiles/${selectedUser.id}.png`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // 이미지 로드 실패 시 기본 이미지로 교체 (에러 방지)
+                        e.currentTarget.src = "/default-profile.png";
+                      }}
                       alt="Profile"
                     />
                   )}
