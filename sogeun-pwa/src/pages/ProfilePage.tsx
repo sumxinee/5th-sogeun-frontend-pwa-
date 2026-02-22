@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchPage from "./SearchPage";
 import type { Track } from "./SearchPage";
 import "../index.css";
 import musicPlanetIcon from "../assets/logo.png";
+import { LEVEL_CONFIG } from "../data/levelConfig";
 
 // ------------------- [아이콘 컴포넌트] -------------------
 const Icons = {
