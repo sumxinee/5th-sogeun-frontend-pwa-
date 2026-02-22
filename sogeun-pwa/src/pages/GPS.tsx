@@ -202,14 +202,14 @@ const GPS: React.FC<GPSProps> = ({
   const [recommendCount, setRecommendCount] = useState<number>(0);
 
   // 2. Jotai 상태 구독
-  const [token, setToken] = useAtom(accessTokenAtom);
+  const [token] = useAtom(accessTokenAtom);
   const [myLocation, setMyLocation] = useAtom(locationAtom); // 전역 위치 상태 사용
   const [serverUsers, setServerUsers] = useState<ServerUserData[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([]);
   const [myUserId] = useAtom(numericUserIdAtom);
-  const BASE_URL = "https://sogeun.cloud";
+  const BASE_URL = "https://api.sogeun.cloud";
 
-  const MAX_RADAR_DIST = 380;
+  const MAX_RADAR_DIST = 280;
   const RADAR_UI_RADIUS = 250;
 
   const handleRecommend = async () => {
@@ -404,12 +404,12 @@ const GPS: React.FC<GPSProps> = ({
       color: "var(--sogun-cyan)",
     }, // 가장 바깥쪽 두꺼운 파란 원호
     {
-      r: 120,
-      w: 1,
-      d: "40 80",
-      s: 15,
-      dir: -1,
-      color: "var(--sogun-white)",
+      r: 160, // 반지름 (가장 바깥쪽)
+      w: 12, // 두께를 12 이상으로 대폭 키움 (사진의 느낌)
+      s: 10, // 회전 속도 (초)
+      dir: 1, // 시계 방향
+      color: "#00FBFF", // 선명한 사이언 색상
+      glow: "0 0 15px rgba(0, 251, 255, 0.8)",
     },
     {
       r: 90,
@@ -464,7 +464,7 @@ const GPS: React.FC<GPSProps> = ({
           signal: ctrl.signal,
           onopen: async (res) => {
             if (res.ok) {
-              console.log("📡 스트림 연결 성공");
+              console.log("📡 sse 스트림 연결 성공");
               // 약간의 딜레이를 주어 서버가 세션을 완전히 잡을 시간을 줍니다.
               setTimeout(async () => {
                 try {
@@ -542,18 +542,20 @@ const GPS: React.FC<GPSProps> = ({
     const numericUserId = myUserId ? Number(myUserId) : 0;
     console.log("변환된 숫자 ID:", numericUserId);
     const isIdValid = !isNaN(numericUserId) && numericUserId !== 0;
-    const isLocationValid = !!(myLocation?.lat && myLocation?.lon);
+    const isLocationValid =
+      !!(myLocation?.lat && myLocation?.lon) && myLocation.lat !== 0;
     const isTokenValid = !!token;
 
     if (!isIdValid || !isTokenValid || !isLocationValid) {
       console.log("⏳ SSE 대기 중...", {
         numericUserId,
-        isLocationValid,
         isTokenValid,
       });
       return;
     }
-    const sseEndpoint = `${BASE_URL}/api/sse/location/nearby?userId=${numericUserId}&lat=${myLocation!.lat}&lon=${myLocation!.lon}`;
+    const safeLat = myLocation.lat.toFixed(6);
+    const safeLon = myLocation.lon.toFixed(6);
+    const sseEndpoint = `${BASE_URL}/api/sse/location/nearby?userId=${numericUserId}&lat=${safeLat}&lon=${safeLon}`;
     const ctrl = new AbortController();
 
     const connectSSE = async () => {
@@ -566,11 +568,13 @@ const GPS: React.FC<GPSProps> = ({
           },
           signal: ctrl.signal,
           onopen: async (res) => {
-            if (res.ok) console.log("🚀 SSE 연결 성공!");
-            else if (res.status === 401 || res.status === 403) {
-              setToken(null); // 토큰 만료 시 초기화
-              console.error("인증 에러: 로그인이 필요합니다.");
-              console.error("SSE 연결 실패 상태코드:", res.status);
+            if (res.ok) {
+              console.log("🚀 SSE 스트림 연결 성공! (주변 유저 수신 대기)");
+            } else {
+              console.error(`❌ SSE 응답 에러: ${res.status}`);
+              // 500 에러 발생 시 서버 로그 확인이 필요함을 알림
+              if (res.status === 500)
+                console.error("서버 내부 계산 로직 확인 필요");
             }
           },
           onmessage: (event) => {
@@ -587,6 +591,7 @@ const GPS: React.FC<GPSProps> = ({
           onerror: (err) => {
             console.error("SSE 에러:", err);
             ctrl.abort();
+            throw err;
           },
         });
       } catch (err) {
@@ -595,8 +600,11 @@ const GPS: React.FC<GPSProps> = ({
     };
 
     connectSSE();
-    return () => ctrl.abort(); // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
-  }, [token, myLocation?.lat, myLocation?.lon, myUserId]); // 3. 토큰과 위치를 의존성에 추가
+    return () => {
+      console.log("🔌 SSE 연결 해제");
+      ctrl.abort();
+    }; // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
+  }, [token, myUserId]); // 3. 토큰과 위치를 의존성에 추가
 
   useEffect(() => {
     console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
@@ -895,7 +903,49 @@ const GPS: React.FC<GPSProps> = ({
             className="absolute w-[240px] h-[240px] border-[4px] border-cyan-400/70 mix-blend-screen blur-[1px] shadow-[0_0_20px_rgba(34,211,238,0.5)]"
           />
         ))}
-
+        <div className="absolute inset-[-50px] z-20 pointer-events-none flex items-center justify-center">
+          <svg
+            viewBox="0 0 420 420"
+            className="w-[420px] h-[420px] overflow-visible"
+          >
+            {extraSegments.map((seg, i) => (
+              <motion.circle
+                key={`dynamic-seg-${i}`}
+                cx="210"
+                cy="210"
+                r={seg.r}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth={seg.w}
+                strokeLinecap="round"
+                style={{
+                  filter: `drop-shadow(${seg.glow})`,
+                }}
+                animate={{
+                  // 1. 회전 애니메이션
+                  rotate: 360 * seg.dir,
+                  // 2. 길이 변화 애니메이션: [최소길이, 최대길이] 순으로 반복
+                  // "선길이 공백" 구조입니다.
+                  strokeDasharray: ["20 380", "150 250", "20 380"],
+                }}
+                transition={{
+                  // 회전은 선형(linear)으로 계속 돌게 함
+                  rotate: {
+                    duration: seg.s,
+                    repeat: Infinity,
+                    ease: "linear",
+                  },
+                  // 길이는 부드럽게(easeInOut) 왔다갔다 함
+                  strokeDasharray: {
+                    duration: 3, // 3초 동안 길어졌다 짧아짐
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                }}
+              />
+            ))}
+          </svg>
+        </div>
         {/* 1. 안쪽 레이어 (메인 - 선명하고 밝은 궤도) */}
         <div className="absolute inset-[-50px] z-20 pointer-events-none flex items-center justify-center">
           <svg

@@ -97,7 +97,7 @@ const SongEditPage: React.FC = () => {
 
     console.log("선택된 프로필 노래:", track.trackName);
     const token = localStorage.getItem("accessToken");
-    const BASE_URL = "https://sogeun.cloud";
+    const BASE_URL = "https://api.sogeun.cloud";
     try {
       await axios.post(
         `${BASE_URL}/api/broadcast/changemusic`,
