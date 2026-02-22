@@ -1145,7 +1145,7 @@ const GPS: React.FC<GPSProps> = ({
       </div>
       {/* 6. 하단 내비게이션 및 Now Playing 카드 (너비 및 위치 완전 수정) */}
 
-      <div className="fixed bottom-0 left-0 w-full flex flex-col items-center z-[120] pointer-events-none pb-10">
+      <div className="absolute bottom-0 left-0 w-full flex flex-col items-center z-[120] pointer-events-none pb-10">
         {/* [Now Playing] 하단바 바로 위에 위치하도록 배치 */}
         <AnimatePresence>
           {currentTrack && (
@@ -1200,7 +1200,7 @@ const GPS: React.FC<GPSProps> = ({
         </AnimatePresence>
 
         {/* [Nav Bar] ProfilePage의 구조와 100% 동일하게 구현 */}
-        <div className="pointer-events-auto w-[88%] h-[75px] bg-white/95 backdrop-blur-3xl rounded-[38px] flex justify-between items-center px-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] relative">
+        <div className="pointer-events-auto w-[90%] h-[75px] bg-white/95 backdrop-blur-3xl rounded-[38px] flex justify-between items-center px-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] relative">
           {/* 홈 버튼 */}
           <button
             onClick={() => navigate("/gps")}

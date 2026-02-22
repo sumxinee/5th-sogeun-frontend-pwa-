@@ -5,15 +5,15 @@
    ========================================= */
 :root {
   /* 🎨 소근(Sogun) 포인트 컬러 */
-  --sogun-cyan: #00F0FF; /* 레이더의 밝은 민트/하늘색 */
-  --sogun-pink: #FF9E9E;
+  --sogun-cyan: #00f0ff; /* 레이더의 밝은 민트/하늘색 */
+  --sogun-pink: #ff9e9e;
 
-  --sogun-purple: #A3A3E9; 
-  
-  --sogun-error: #FF4D4D;
-  
+  --sogun-purple: #a3a3e9;
+
+  --sogun-error: #ff4d4d;
+
   /* ✍️ 텍스트 컬러 */
-  --text-white: #FFFFFF;
+  --text-white: #ffffff;
   --text-sub: rgba(255, 255, 255, 0.8);
 }
 
@@ -25,9 +25,30 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
 
-  /* 그라데이션 */
+  /* 여백 색상: 배경과 대비되는 약간 어두운 톤 */
+  background-color: #ecece1;
+
+  /* 가로 중앙 정렬 */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* 상단부터 시작 */
+  overflow-x: hidden;
+}
+
+/* [수정됨] 실제 앱 컨테이너 (모바일 사이즈 고정) */
+#root {
+  width: 100%;
+  max-width: 430px; /* iPhone 15 Pro Max 정도의 너비 */
+  min-height: 100vh;
+  position: relative;
+  overflow-y: auto; /* 내용이 길어지면 내부에서 스크롤 */
+  overflow-x: hidden;
+
+  /* 기존 body에 있던 그라데이션을 여기로 옮김 */
   background: linear-gradient(
     169deg,
     #f8c1e9 0%,
@@ -35,19 +56,18 @@ body {
     #9fc3e9 66.28%,
     #6bcda6 99.18%
   );
-  
-  background-repeat: no-repeat;
-  background-attachment: fixed; /* 배경 고정 */
+  background-attachment: local; /* 배경이 스크롤과 함께 움직이도록 */
   color: var(--text-white);
+
+  /* 여백과의 확실한 구분감을 위한 그림자 */
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
 }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
+/* 기존 nav 등 고정 요소 위치 수정을 위해 필요 */
+.bottom-nav {
+  position: absolute; /* fixed 대신 absolute로 변경하여 #root 내부에 고정 */
+  bottom: 30px;
 }
-
 button {
   background: none;
   border: none;
@@ -95,7 +115,7 @@ button {
 .auth-title {
   font-size: 28px;
   font-weight: 700;
-  color: #54687A;
+  color: #54687a;
   margin-bottom: 30px;
   margin: 10px;
   text-shadow: none;
@@ -171,11 +191,11 @@ button {
 .auth-toggle-container {
   margin-top: 25px;
   width: 100%;
-  
-  display: flex;             /* 플렉스 박스 선언 */
-  flex-direction: row;       /* 가로로 배치 */
-  justify-content: center;   /* 화면 정중앙 */
-  align-items: center;       /* 수직 중앙 */
+
+  display: flex; /* 플렉스 박스 선언 */
+  flex-direction: row; /* 가로로 배치 */
+  justify-content: center; /* 화면 정중앙 */
+  align-items: center; /* 수직 중앙 */
   gap: 10px;
 }
 
@@ -192,8 +212,8 @@ button {
   border: none;
   cursor: pointer;
   padding: 0; /* 불필요한 여백 제거 */
-  
-  color: #FFFFFF;
+
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
   text-decoration: underline;
@@ -232,8 +252,13 @@ button {
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* =========================================
@@ -247,7 +272,7 @@ button {
   flex-direction: column;
   align-items: center;
   padding-top: 60px;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 /* 상단 텍스트 */
@@ -265,7 +290,7 @@ button {
   font-size: 32px;
   font-weight: 800;
   margin: 0;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 .gps-header p {
   font-size: 16px;
@@ -274,12 +299,12 @@ button {
   margin-top: 4px;
 }
 .gps-level-badge {
-    background: rgba(255, 158, 158, 0.8);
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 800;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  background: rgba(255, 158, 158, 0.8);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* 회전하는 민트색 레이더 링 */
@@ -290,7 +315,7 @@ button {
   width: 320px;
   height: 320px;
   border-radius: 50%;
-  border: 4px solid transparent; 
+  border: 4px solid transparent;
   border-top-color: var(--sogun-cyan); /* 민트색 포인트 */
   border-left-color: rgba(0, 240, 255, 0.3);
   filter: drop-shadow(0 0 10px var(--sogun-cyan));
@@ -299,8 +324,12 @@ button {
 }
 
 @keyframes spin-radar {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 /* 배경 정적 링 */
@@ -324,7 +353,12 @@ button {
   left: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    transparent 100%
+  );
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
   z-index: 3;
   pointer-events: none;
@@ -342,23 +376,83 @@ button {
   border-radius: 50%;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(0, 240, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(0, 240, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.5);
   animation: waveExpand 2s infinite ease-out;
 }
 
 /* 레벨별 애니메이션 매핑 */
-.gps-pulse-wave[data-level="1"] { animation-name: waveExpandLv1; }
-.gps-pulse-wave[data-level="2"] { animation-name: waveExpandLv2; }
-.gps-pulse-wave[data-level="3"] { animation-name: waveExpandLv3; }
-.gps-pulse-wave[data-level="4"] { animation-name: waveExpandLv4; }
-.gps-pulse-wave[data-level="5"] { animation-name: waveExpandLv5; }
+.gps-pulse-wave[data-level="1"] {
+  animation-name: waveExpandLv1;
+}
+.gps-pulse-wave[data-level="2"] {
+  animation-name: waveExpandLv2;
+}
+.gps-pulse-wave[data-level="3"] {
+  animation-name: waveExpandLv3;
+}
+.gps-pulse-wave[data-level="4"] {
+  animation-name: waveExpandLv4;
+}
+.gps-pulse-wave[data-level="5"] {
+  animation-name: waveExpandLv5;
+}
 
-@keyframes waveExpandLv1 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(7); opacity: 0; } }
-@keyframes waveExpandLv2 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(14); opacity: 0; } }
-@keyframes waveExpandLv3 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(21); opacity: 0; } }
-@keyframes waveExpandLv4 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(28); opacity: 0; } }
-@keyframes waveExpandLv5 { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(35); opacity: 0; } }
+@keyframes waveExpandLv1 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(7);
+    opacity: 0;
+  }
+}
+@keyframes waveExpandLv2 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(14);
+    opacity: 0;
+  }
+}
+@keyframes waveExpandLv3 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(21);
+    opacity: 0;
+  }
+}
+@keyframes waveExpandLv4 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(28);
+    opacity: 0;
+  }
+}
+@keyframes waveExpandLv5 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(35);
+    opacity: 0;
+  }
+}
 
 /* 나 (중앙 아이콘) */
 .gps-me {
@@ -370,7 +464,9 @@ button {
   height: 14px;
   background: white;
   border-radius: 50%;
-  box-shadow: 0 0 15px white, 0 0 25px var(--sogun-cyan);
+  box-shadow:
+    0 0 15px white,
+    0 0 25px var(--sogun-cyan);
   z-index: 20;
 }
 
@@ -397,7 +493,7 @@ button {
   align-items: center;
   font-size: 18px;
   color: white;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
 }
 
@@ -411,7 +507,7 @@ button {
   font-size: 11px;
   color: white;
   font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   max-width: 60px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -428,7 +524,7 @@ button {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 0 20px; 
+  padding: 0 20px;
   margin-top: 0px;
   height: 50px;
   box-sizing: border-box;
@@ -460,7 +556,7 @@ button {
 
 /* 분홍색 '확인' 버튼 */
 .confirm-btn {
-  color: #FF005C;
+  color: #ff005c;
   font-size: 15px;
   font-weight: 700;
 }
@@ -496,7 +592,7 @@ button {
 
 .profile-edit-label {
   margin-top: 10px;
-  color: #4A4A4A; /* 진한 회색 텍스트 */
+  color: #4a4a4a; /* 진한 회색 텍스트 */
   font-size: 12px;
   font-weight: 500;
 }
@@ -534,7 +630,7 @@ button {
 }
 
 .clean-profile-bg {
-  background: linear-gradient(180deg, #F3D5F7 0%, #B0CFF0 50%, #76DAB8 100%);
+  background: linear-gradient(180deg, #f3d5f7 0%, #b0cff0 50%, #76dab8 100%);
   width: 100vw;
   height: 100vh;
   display: flex;
@@ -544,7 +640,7 @@ button {
   margin: 0;
   padding-top: 40px;
   box-sizing: border-box;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 /* =========================================
@@ -557,7 +653,7 @@ button {
   transform: translateX(-50%);
   width: 320px;
   height: 70px;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 35px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -571,14 +667,14 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #CCCCCC;
+  color: #cccccc;
   cursor: pointer;
   width: 40px;
   transition: color 0.2s;
 }
 
 .nav-item.active {
-  color: #FF6B6B;
+  color: #ff6b6b;
 }
 
 .nav-text {
@@ -596,12 +692,12 @@ button {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: #F5F5F5;
-  color: #CCCCCC;
+  background: #f5f5f5;
+  color: #cccccc;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
   font-size: 24px;
   cursor: pointer;
 }
@@ -631,7 +727,7 @@ button {
   right: 5px;
   width: 50px;
   height: 50px;
-  background-color: #5FD3C8; /* 민트색 */
+  background-color: #5fd3c8; /* 민트색 */
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -640,7 +736,7 @@ button {
   font-weight: regular;
   font-size: 14px;
   border: 2px solid white;
-  box-shadow: 0 4px 10px rgba(0,0,0,0,15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0, 15);
 }
 
 /* 2. 텍스트 정보들 */
@@ -717,7 +813,7 @@ button {
   box-sizing: border-box;
   margin-top: -3px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -735,7 +831,7 @@ button {
   color: white;
   margin-top: 6px;
   font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .progress-bar-bg {
@@ -745,21 +841,30 @@ button {
   border-radius: 20px;
   margin-bottom: 8px;
   overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); /* 안쪽 그림자로 깊이감 */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* 안쪽 그림자로 깊이감 */
 }
 
 /* 반짝이는 애니메이션 정의 */
 @keyframes superShine {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; } /* -200%로 변경하여 더 부드럽게 */
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  } /* -200%로 변경하여 더 부드럽게 */
 }
 
 .shiny-bar {
   height: 100% !important;
   border-radius: 20px;
-  background-image: linear-gradient(90deg, #FF7E79, #5FD3C8, #FF7E79) !important;
-  background-size: 200% 100% !important; 
-  
+  background-image: linear-gradient(
+    90deg,
+    #ff7e79,
+    #5fd3c8,
+    #ff7e79
+  ) !important;
+  background-size: 200% 100% !important;
+
   /* 애니메이션 적용 */
   animation: superShine 5s linear infinite !important;
 }
@@ -778,13 +883,13 @@ button {
 .song-list-row {
   display: flex;
   gap: 14px;
-  width: fit-content;      /* 내용물만큼만 크기 잡기 */
-  margin: 0 auto;          /* 그 박스를 가운데로 */
-  max-width: 100%;         /* 화면 넘어가면 꽉 차게 */
-  
+  width: fit-content; /* 내용물만큼만 크기 잡기 */
+  margin: 0 auto; /* 그 박스를 가운데로 */
+  max-width: 100%; /* 화면 넘어가면 꽉 차게 */
+
   /* 스크롤 관련 */
   overflow-x: auto;
-  scrollbar-width: none;   /* 파이어폭스 스크롤바 숨김 */
+  scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
   -ms-overflow-style: none; /* IE 스크롤바 숨김 */
   padding-bottom: 10px;
 }
@@ -801,7 +906,7 @@ button {
   height: 100px;
   border-radius: 0px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   background-color: #ddd;
   position: relative;
   z-index: 1;
@@ -820,7 +925,11 @@ button {
   left: 0;
   width: 100%;
   height: 40px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   border-radius: 8px;
@@ -839,8 +948,8 @@ button {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border: 3px solid #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 /* 레벨 뱃지 (우측 하단 동그라미) */
@@ -850,7 +959,7 @@ button {
   right: 10px;
   width: 50px;
   height: 50px;
-  background-color: #4FD1C5;
+  background-color: #4fd1c5;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -858,13 +967,17 @@ button {
   color: black;
   font-weight: 700;
   font-size: 18px;
-  border: 3px solid rgba(255,255,255,0.9);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 /* 레벨 카드 내의 진행바 채우기 */
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4FD1C5 0%, #63B3ED 100%); /* 그라데이션 적용 */
+  background: linear-gradient(
+    90deg,
+    #4fd1c5 0%,
+    #63b3ed 100%
+  ); /* 그라데이션 적용 */
   border-radius: 10px;
 }
