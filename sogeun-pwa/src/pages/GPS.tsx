@@ -208,7 +208,7 @@ const GPS: React.FC<GPSProps> = ({
   const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([]);
   const [myUserId] = useAtom(numericUserIdAtom);
   const BASE_URL = "https://api.sogeun.cloud";
-
+  const [isLocationUploaded, setIsLocationUploaded] = useState(false);
   const MAX_RADAR_DIST = 280;
   const RADAR_UI_RADIUS = 250;
 
@@ -366,13 +366,14 @@ const GPS: React.FC<GPSProps> = ({
     // 3. 오른쪽 끝 직선 길이를 더 길게 연장 (L 500 -> 650)
     "L 300 50";
   //----------------------------------------------------------
+  const cleanToken = token ? token.replace(/^"|"$/g, "") : "";
   useEffect(() => {
     // 필수 데이터가 없으면 실행 안 함
-    if (!token || !myLocation || !currentTrack) return;
+    if (!token || !myLocation) return;
 
     const ctrl = new AbortController();
     let isConnected = false; // 중복 호출 방지 플래그
-
+    const cleanToken = token ? token.replace(/^"|"$/g, "") : "";
     const connectAndStartBroadcast = async () => {
       try {
         console.log("🚀 SSE 연결 시도...");
@@ -380,7 +381,7 @@ const GPS: React.FC<GPSProps> = ({
         await fetchEventSource(`${BASE_URL}/api/sse/stream`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${cleanToken}`,
             Accept: "text/event-stream",
           },
           signal: ctrl.signal,
@@ -390,6 +391,12 @@ const GPS: React.FC<GPSProps> = ({
               console.log("📡 SSE 스트림 연결 성공");
               isConnected = true;
 
+              if (!currentTrack || !currentTrack.trackId) {
+                console.warn(
+                  "⚠️ 아직 곡 정보가 설정되지 않았습니다. 방송 송출(ON)을 대기합니다.",
+                );
+                return;
+              }
               // 연결 성공 후 방송 송출(ON) 호출
               try {
                 const onRes = await broadcastAPI.on(
@@ -421,7 +428,7 @@ const GPS: React.FC<GPSProps> = ({
 
           onerror: (err) => {
             console.error("SSE 커넥션 에러:", err);
-            // 필요 시 여기서 ctrl.abort()를 호출하거나 재연결 로직 수행
+            ctrl.abort();
           },
         });
       } catch (err) {
@@ -445,6 +452,7 @@ const GPS: React.FC<GPSProps> = ({
       }
     };
   }, []);
+
   //--------------------------- sse- nearby --------------------------
 
   useEffect(() => {
@@ -452,40 +460,45 @@ const GPS: React.FC<GPSProps> = ({
     const numericUserId = myUserId ? Number(myUserId) : 0;
     console.log("변환된 숫자 ID:", numericUserId);
     const isIdValid = !isNaN(numericUserId) && numericUserId !== 0;
-    const isLocationValid =
-      !!(myLocation?.lat && myLocation?.lon) && myLocation.lat !== 0;
+    const isLocationValid = !!(myLocation?.lat && myLocation?.lon);
     const isTokenValid = !!token;
 
-    if (!isIdValid || !isTokenValid || !isLocationValid) {
-      console.log("⏳ SSE 대기 중...", {
-        numericUserId,
-        isTokenValid,
-      });
+    if (
+      !isIdValid ||
+      !isTokenValid ||
+      !isLocationValid ||
+      !isLocationUploaded
+    ) {
+      console.log(
+        "⏳ SSE 대기 중: 위치 데이터가 서버에 먼저 전송되어야 합니다.",
+      );
       return;
     }
-    const safeLat = myLocation.lat.toFixed(6);
-    const safeLon = myLocation.lon.toFixed(6);
-    const sseEndpoint = `${BASE_URL}/api/sse/location/nearby?userId=${numericUserId}&lat=${safeLat}&lon=${safeLon}`;
+    //const safeLat = myLocation.lat.toFixed(6);
+    //const safeLon = myLocation.lon.toFixed(6);
+    const sseEndpoint = `${BASE_URL}/api/sse/location/nearby`;
     const ctrl = new AbortController();
 
     const connectSSE = async () => {
       try {
+        console.log("⏳ 서버 데이터 동기화를 위해 1.5초 후 SSE 연결합니다...");
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         await fetchEventSource(sseEndpoint, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`, // Jotai에서 가져온 토큰
-            Accept: "text/event-stream",
+            Authorization: `Bearer ${cleanToken}`,
+            Accept: "text/event-stream, application/json",
+            "Cache-Control": "no-cache",
           },
           signal: ctrl.signal,
           onopen: async (res) => {
-            if (res.ok) {
-              console.log("🚀 SSE 스트림 연결 성공! (주변 유저 수신 대기)");
-            } else {
-              console.error(`❌ SSE 응답 에러: ${res.status}`);
-              // 500 에러 발생 시 서버 로그 확인이 필요함을 알림
-              if (res.status === 500)
-                console.error("서버 내부 계산 로직 확인 필요");
+            if (!res.ok) {
+              console.error(`❌ 연결 실패: ${res.status}`);
+              // 401(인증), 406(형식), 500(로직) 모두 여기서 체크 가능
+              if (res.status === 401 || res.status === 406) ctrl.abort();
+              return;
             }
+            console.log("🚀 SSE 연결 성공!");
           },
           onmessage: (event) => {
             if (event.data && event.data !== "heartbeat") {
@@ -514,7 +527,7 @@ const GPS: React.FC<GPSProps> = ({
       console.log("🔌 SSE 연결 해제");
       ctrl.abort();
     }; // 컴포넌트 언마운트 혹은 토큰/위치 변경 시 연결 해제
-  }, [token, myUserId]); // 3. 토큰과 위치를 의존성에 추가
+  }, [token, myUserId, myLocation]); // 3. 토큰과 위치를 의존성에 추가
 
   useEffect(() => {
     console.log("로컬스토리지 확인:", localStorage.getItem("accessToken"));
@@ -551,7 +564,7 @@ const GPS: React.FC<GPSProps> = ({
           fetch(url, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${cleanToken}`,
               UserId: String(numericUserId),
               "Content-Type": "application/json",
             },
@@ -561,7 +574,10 @@ const GPS: React.FC<GPSProps> = ({
             }),
           })
             .then((res) => {
-              if (res.ok) console.log("📍 위치 업데이트 성공!");
+              if (res.ok) {
+                console.log("📍 위치 업데이트 성공!");
+                setIsLocationUploaded(true);
+              }
             })
             .catch((err) => console.error("위치 전송 실패:", err));
         }
@@ -641,7 +657,7 @@ const GPS: React.FC<GPSProps> = ({
           music: {
             trackId: track.trackId || track.id, // 서버 명세에 맞춰 ID 전달
             trackName: track.trackName,
-            artistName: track.artistName,
+            artist: track.artistName,
             artworkUrl: track.artworkUrl100,
             previewUrl: track.previewUrl,
           },
@@ -649,11 +665,16 @@ const GPS: React.FC<GPSProps> = ({
       }),
 
     // 음악 송출 OFF
-    off: async (token: string) =>
-      fetch(`${BASE_URL}/api/broadcast/off`, {
+    off: async (token: string) => {
+      return fetch(`${BASE_URL}/api/broadcast/off`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        // keepalive: true 하나면 페이지가 닫혀도 브라우저가 끝까지 전송을 책임집니다.
+        keepalive: true,
+      });
+    },
 
     // 송출 중인 노래 변경
     changeMusic: async (token: string, musicData: any) =>
