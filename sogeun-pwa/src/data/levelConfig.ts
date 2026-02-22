@@ -1,4 +1,3 @@
-// src/data/constants.ts
 export const LEVEL_CONFIG = [
   { lv: 1, minLikes: 0, maxLikes: 2, radius: 50 },
   { lv: 2, minLikes: 3, maxLikes: 5, radius: 100 },

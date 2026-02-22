@@ -48,7 +48,7 @@ const SongEditPage: React.FC = () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-anyㅂ
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mappedTracks: Track[] = res.data.results.map((item: any) => ({
         trackId: item.trackId,
         trackName: item.trackName,
@@ -99,9 +99,9 @@ const SongEditPage: React.FC = () => {
 
     try {
       // 3. 서버에 변경 요청 보내기
-      // ※ 주의: '/api/members/profile/music' 부분은 백엔드 개발자가 알려준 실제 주소로 수정해야 할 수 있음
+      const BASE_URL = "https://sogeun.cloud";
       await axios.patch(
-        "/api/members/profile/music",
+        `${BASE_URL}/api/members/profile/music`,
         {
           trackName: track.trackName,
           artistName: track.artistName,
@@ -110,8 +110,7 @@ const SongEditPage: React.FC = () => {
         },
         {
           headers: {
-            // 토큰이 필요한 경우 아래 주석을 해제하고 사용
-            // 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         },
       );
