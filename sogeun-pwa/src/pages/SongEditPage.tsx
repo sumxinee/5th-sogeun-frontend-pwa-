@@ -96,25 +96,26 @@ const SongEditPage: React.FC = () => {
     if (audioRef.current) audioRef.current.pause();
 
     console.log("선택된 프로필 노래:", track.trackName);
-
+    const token = localStorage.getItem("accessToken");
+    const BASE_URL = "https://sogeun.cloud";
     try {
-      // 3. 서버에 변경 요청 보내기
-      const BASE_URL = "https://sogeun.cloud";
-      await axios.patch(
-        `${BASE_URL}/api/members/profile/music`,
+      await axios.post(
+        `${BASE_URL}/api/broadcast/changemusic`,
         {
-          trackName: track.trackName,
-          artistName: track.artistName,
-          artworkUrl: track.artworkUrl100, // 앨범 커버
-          previewUrl: track.previewUrl, // 미리듣기 링크
+          music: {
+            trackId: track.trackId,
+            trackName: track.trackName,
+            artistName: track.artistName,
+            artworkUrl: track.artworkUrl100,
+            previewUrl: track.previewUrl,
+          },
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         },
       );
-
       // 4. 성공 시 알림 및 페이지 이동
       alert(`'${track.trackName}'(으)로 배경음악이 변경되었습니다!`);
 
