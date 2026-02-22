@@ -26,9 +26,7 @@ export default function AuthPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   // Vercel 환경 변수에서 가져오는 API 주소
-  const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+  const API_URL = import.meta.env.VITE_API_URL || "https://api.sogeun.cloud";
 
   // 모드 전환 시 입력값 및 에러 초기화
   const toggleMode = () => {
