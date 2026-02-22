@@ -10,6 +10,7 @@ import { currentTrackAtom, isPlayingAtom } from "../store/music";
 import type { Track } from "./SearchPage";
 import musicPlanetIcon from "../assets/logo.png";
 import { Heart, ThumbsUp } from "lucide-react";
+import { LEVEL_CONFIG } from "../data/levelConfig";
 
 interface ServerUserData {
   id: number;
@@ -181,16 +182,7 @@ const Icons = {
     </svg>
   ),
 };
-// 좋아요 개수에 따른 레벨 및 반경 설정 (이미지 기준)
-const LEVEL_CONFIG = [
-  { lv: 1, minLikes: 0, maxLikes: 2, radius: 50 },
-  { lv: 2, minLikes: 2, maxLikes: 5, radius: 100 },
-  { lv: 3, minLikes: 6, maxLikes: 10, radius: 150 },
-  { lv: 4, minLikes: 11, maxLikes: 15, radius: 200 },
-  { lv: 5, minLikes: 16, maxLikes: 20, radius: 250 },
-  { lv: 6, minLikes: 21, maxLikes: 30, radius: 300 },
-  { lv: 7, minLikes: 31, maxLikes: 40, radius: 350 },
-];
+
 const GPS: React.FC<GPSProps> = ({
   onPlusClick,
   //onSelectTrack,
@@ -799,7 +791,7 @@ const GPS: React.FC<GPSProps> = ({
             소리가 근처에
           </p>
         </div>
-        <div className="bg-pink-300/80 text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center shadow-lg h-fit">
+        <div className="bg-pink-300/80 text-white text-[12px] font-black px-3 py-1 rounded-full flex items-center shadow-lg h-fit">
           <span className="mr-1">⚡</span> Lv.{currentLevel}
         </div>
       </div>
