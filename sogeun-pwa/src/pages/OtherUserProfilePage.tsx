@@ -1,4 +1,4 @@
-import React from "react";
+//import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "../index.css";
@@ -6,7 +6,16 @@ import "../index.css";
 // ------------------- [아이콘 컴포넌트] -------------------
 const Icons = {
   Pin: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
       <circle cx="12" cy="10" r="3"></circle>
     </svg>
@@ -17,13 +26,37 @@ const Icons = {
     </svg>
   ),
   Home: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="28"
+      height="28"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+      />
     </svg>
   ),
   Profile: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="28"
+      height="28"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
     </svg>
   ),
 };
@@ -39,7 +72,8 @@ export default function OtherUserProfilePage() {
     likesCurrent: 24,
     likesMax: 30,
     location: "123m 떨어져 있어요",
-    profileImg: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    profileImg:
+      "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
     likedSongs: [
       "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=150",
       "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=150",
@@ -58,7 +92,8 @@ export default function OtherUserProfilePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        background: "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
+        background:
+          "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
         minHeight: "100vh",
       }}
     >
@@ -71,7 +106,7 @@ export default function OtherUserProfilePage() {
           marginBottom: "15px",
           display: "flex",
           alignItems: "center",
-          gap: "10px"
+          gap: "10px",
         }}
       >
         <h1
@@ -103,9 +138,7 @@ export default function OtherUserProfilePage() {
         </div>
 
         {/* 레벨 뱃지 */}
-        <div className="level-badge">
-          {userData.level}
-        </div>
+        <div className="level-badge">{userData.level}</div>
       </div>
 
       {/* 3. 닉네임 및 정보 */}
@@ -118,17 +151,37 @@ export default function OtherUserProfilePage() {
           marginBottom: "20px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "3px" }}>
-          <span style={{ fontSize: "20px", fontWeight: "900", color: "#333333" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: "8px",
+            marginBottom: "3px",
+          }}
+        >
+          <span
+            style={{ fontSize: "20px", fontWeight: "900", color: "#333333" }}
+          >
             {userData.nickname}
           </span>
-          <span style={{ fontSize: "13px", color: "#666666", fontWeight: "500" }}>
+          <span
+            style={{ fontSize: "13px", color: "#666666", fontWeight: "500" }}
+          >
             {userData.location}
           </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "3px" }}>
-          <span style={{ color: "#FF005C", display: "flex", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            marginTop: "3px",
+          }}
+        >
+          <span
+            style={{ color: "#FF005C", display: "flex", alignItems: "center" }}
+          >
             <Icons.Play />
           </span>
           <span
@@ -159,8 +212,8 @@ export default function OtherUserProfilePage() {
           {/* 진행 바 채우기 (여기가 반짝이는 부분!) */}
           <div
             className="shiny-bar"
-            style={{ 
-              width: `${progressPercent}%` 
+            style={{
+              width: `${progressPercent}%`,
             }}
           ></div>
         </div>
@@ -171,14 +224,38 @@ export default function OtherUserProfilePage() {
         </div>
       </div>
 
-
       {/* 6. 좋아요 누른 노래 */}
       <div style={{ width: "100%" }}>
-        <div style={{ width: "90%", margin: "0 auto 12px auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ fontSize: "14px", fontWeight: "700", color: "white", margin: 3, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
+        <div
+          style={{
+            width: "90%",
+            margin: "0 auto 12px auto",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "14px",
+              fontWeight: "700",
+              color: "white",
+              margin: 3,
+              textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+            }}
+          >
             좋아요 누른 노래
           </h3>
-          <span style={{ fontSize: "11px", fontWeight: "500", color: "white", margin: 3, cursor: "pointer", opacity: 0.9 }}>
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: "500",
+              color: "white",
+              margin: 3,
+              cursor: "pointer",
+              opacity: 0.9,
+            }}
+          >
             더보기
           </span>
         </div>
@@ -212,15 +289,26 @@ export default function OtherUserProfilePage() {
             className="w-[64px] h-[64px] bg-gradient-to-tr from-[#FFDEE9] to-[#B5FFFC] rounded-full flex items-center justify-center shadow-lg border-[4px] border-[#F0F4F8]"
             style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="white">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="white"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
           </motion.button>
         </div>
 
         {/* 남의 프로필을 볼 때는 '나' 버튼이 활성화(분홍색)되지 않도록 text-gray-400으로 변경 */}
-        <button 
-          onClick={() => navigate("/profile")} 
+        <button
+          onClick={() => navigate("/profile")}
           className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
         >
           <Icons.Profile />

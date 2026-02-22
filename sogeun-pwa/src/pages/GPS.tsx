@@ -275,10 +275,28 @@ const GPS: React.FC<GPSProps> = ({
   // 명세서 기반 API 호출 함수들
   const broadcastAPI = {
     // 음악 송출 ON
-    on: async (token: string) =>
+    on: async (
+      token: string,
+      location: { lat: number; lon: number },
+      track: any,
+    ) =>
       fetch(`${BASE_URL}/api/broadcast/on`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lat: location.lat,
+          lon: location.lon,
+          music: {
+            trackId: track.trackId || track.id, // 서버 명세에 맞춰 ID 전달
+            trackName: track.trackName,
+            artistName: track.artistName,
+            artworkUrl: track.artworkUrl100,
+            previewUrl: track.previewUrl,
+          },
+        }),
       }),
 
     // 음악 송출 OFF
@@ -450,13 +468,26 @@ const GPS: React.FC<GPSProps> = ({
               // 약간의 딜레이를 주어 서버가 세션을 완전히 잡을 시간을 줍니다.
               setTimeout(async () => {
                 try {
-                  const onRes = await broadcastAPI.on(token);
-                  if (onRes.status === 500) {
-                    console.error(
-                      "서버 내부 에러: 방송 송출을 시작할 수 없습니다.",
+                  // 🔥 핵심: token 외에 위치(myLocation)와 음악(currentTrack) 정보를 함께 보내야 합니다.
+                  if (myLocation && currentTrack) {
+                    const onRes = await broadcastAPI.on(
+                      token,
+                      myLocation,
+                      currentTrack,
                     );
+
+                    if (onRes.ok) {
+                      console.log("📻 방송 송출 시작 (ON)");
+                    } else {
+                      console.error(
+                        "서버 내부 에러: 방송 송출을 시작할 수 없습니다. 상태코드:",
+                        onRes.status,
+                      );
+                    }
                   } else {
-                    console.log("📻 방송 송출 시작 (ON)");
+                    console.log(
+                      "⏳ 위치 또는 트랙 정보가 아직 준비되지 않아 ON 호출을 건너뜁니다.",
+                    );
                   }
                 } catch (e) {
                   console.error("ON 호출 실패", e);
@@ -481,6 +512,29 @@ const GPS: React.FC<GPSProps> = ({
       ctrl.abort();
     };
   }, [token]);
+
+  useEffect(() => {
+    const activateBroadcast = async () => {
+      // 1. 필요한 정보가 다 있는지 확인
+      if (token && myLocation && currentTrack) {
+        try {
+          console.log("🚀 모든 정보 준비 완료! 방송 시작 요청 중...");
+          const onRes = await broadcastAPI.on(token, myLocation, currentTrack);
+
+          if (onRes.ok) {
+            console.log("📻 방송 송출 시작 성공!");
+          } else {
+            console.error("❌ 방송 시작 실패:", onRes.status);
+          }
+        } catch (err) {
+          console.error("방송 시작 통신 에러:", err);
+        }
+      }
+    };
+
+    activateBroadcast();
+    // 의존성 배열에 존재 여부를 감시하도록 설정
+  }, [token, !!myLocation, !!currentTrack]);
   //--------------------------- sse- nearby --------------------------
 
   useEffect(() => {
