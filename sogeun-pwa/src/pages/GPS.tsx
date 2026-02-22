@@ -213,8 +213,10 @@ const GPS: React.FC<GPSProps> = ({
   const [serverUsers, setServerUsers] = useState<ServerUserData[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<DetectedUser[]>([]);
   const [myUserId] = useAtom(numericUserIdAtom);
-  const BASE_URL =
-    "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean";
+  const BASE_URL = "https://sogeun.cloud";
+
+  const MAX_RADAR_DIST = 350;
+  const RADAR_UI_RADIUS = 250;
 
   const handleRecommend = async () => {
     if (!selectedUser || !token) return;
@@ -349,7 +351,7 @@ const GPS: React.FC<GPSProps> = ({
     setIsUserMusicPlaying(nextState); // 이퀄라이저 표시 제어
   };
 
-  const myTotalLikes = 35; // 실제로는 서버에서 받아온 내 좋아요 총 합계를 넣으세요.
+  const myTotalLikes = 0;
 
   const currentConfig =
     LEVEL_CONFIG.find(
@@ -365,9 +367,9 @@ const GPS: React.FC<GPSProps> = ({
       id: i,
       top: `${Math.random() * 100}%`,
       left: `${Math.random() * 100}%`,
-      size: Math.random() * 2.2 + 0.2,
-      opacity: Math.random() * 0.4 + 0.1,
-      duration: Math.random() * 40 + 20,
+      size: Math.random() * 4 + 2,
+      opacity: Math.random() * 0.5 + 0.4,
+      duration: Math.random() * 20 + 20,
     })),
   );
 
@@ -375,7 +377,7 @@ const GPS: React.FC<GPSProps> = ({
   const [hudCircles] = useState<HUDCircle[]>(() => {
     const circles: HUDCircle[] = [];
     let currentR = 20;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       currentR += Math.floor(Math.random() * 20) + 15;
       circles.push({
         id: i,
@@ -639,33 +641,7 @@ const GPS: React.FC<GPSProps> = ({
     // 3. [핵심] 목데이터 + 서버 데이터를 합쳐서 세팅
     setNearbyUsers([mockUser, ...updatedUsers]);
   }, [myLocation, serverUsers]);
-  // ------------------- [Effect: Geolocation] -------------------
-  useEffect(() => {
-    if (!("geolocation" in navigator)) return;
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setNearbyUsers((prev) =>
-          prev.map((user) => {
-            const dy = user.lat - latitude;
-            const dx = user.lng - longitude;
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-            const rawDist = Math.sqrt(dx * dx + dy * dy) * 100000;
-            const radius = Math.min(rawDist, 140);
-            return {
-              ...user,
-              angle,
-              radius,
-              distance: `${Math.floor(rawDist / 10)}m`,
-            };
-          }),
-        );
-      },
-      (error) => console.error("위치 추적 오류:", error),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+
   // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
   /*useEffect(() => {
     // 1. [수정] 목데이터를 생성하던 변수를 삭제하거나 무시합니다.
@@ -673,14 +649,17 @@ const GPS: React.FC<GPSProps> = ({
     // 2. 서버 데이터 변환 로직 (실제 유저들만 계산)
     const updatedUsers = serverUsers.map((user) => {
       const dy = user.latitude - (myLocation?.lat || 0);
-      const dx = user.longitude - (myLocation?.lng || 0);
+      const dx = user.longitude - (myLocation?.lon || 0);
       const angle = Math.atan2(dy, dx) * (180 / Math.PI);
       const rawDistMeters = Math.sqrt(dx * dx + dy * dy) * 111000;
-      const uiRadius = Math.min((rawDistMeters / currentMaxRadius) * 140, 140);
+      const uiRadius = Math.min(
+        (rawDistMeters / MAX_RADAR_DIST) * RADAR_UI_RADIUS,
+        RADAR_UI_RADIUS,
+      );
 
       return {
         id: user.id,
-        broadcastId: user.id,
+        broadcastId: user.broadcastId,
         name: user.nickname,
         song: user.musicName,
         artist: user.artistName,
@@ -696,7 +675,38 @@ const GPS: React.FC<GPSProps> = ({
 
     // 3. [핵심] 이제 mockUser 없이 서버에서 온 데이터(updatedUsers)만 세팅합니다.
     setNearbyUsers(updatedUsers);
-  }, [myLocation, serverUsers])*/
+  }, [myLocation, serverUsers]);*/
+
+  // ------------------- [Effect: Geolocation] -------------------
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setNearbyUsers((prev) =>
+          prev.map((user) => {
+            const dy = user.lat - latitude;
+            const dx = user.lng - longitude;
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            const rawDist = Math.sqrt(dx * dx + dy * dy) * 111000;
+            const radius = Math.min(
+              (rawDist / MAX_RADAR_DIST) * RADAR_UI_RADIUS,
+              RADAR_UI_RADIUS,
+            );
+            return {
+              ...user,
+              angle,
+              radius,
+              distance: `${Math.floor(rawDist / 10)}m`,
+            };
+          }),
+        );
+      },
+      (error) => console.error("위치 추적 오류:", error),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   // ------------------- [Effect: Audio Playback] -------------------
   useEffect(() => {
@@ -777,6 +787,26 @@ const GPS: React.FC<GPSProps> = ({
       </div>
       {/* 3. 메인 레이더 */}
       <div className="relative flex items-center justify-center w-full max-w-[300px] aspect-square my-6">
+        {/* ① 100m ~ 500m 고정 배경 링 (과녁판) */}
+        {[100, 200, 300, 400, 500].map((dist) => {
+          const r = (dist / MAX_RADAR_DIST) * RADAR_UI_RADIUS; // 거리별 픽셀 반지름
+          return (
+            <div
+              key={`ring-${dist}`}
+              className="absolute rounded-full border border-white/20 flex items-start justify-center pointer-events-none"
+              style={{
+                width: r * 2,
+                height: r * 2,
+              }}
+            >
+              {/* 거리 라벨 텍스트 */}
+              <span className="text-white/40 text-[9px] -mt-3.5 bg-transparent px-1 font-medium tracking-widest">
+                {dist}m
+              </span>
+            </div>
+          );
+        })}
+
         {/* Waves */}
         {[0, 2.5, 5.0].map((delay) => (
           <motion.div
@@ -828,27 +858,6 @@ const GPS: React.FC<GPSProps> = ({
           </svg>
         </div>
 
-        {/* HUD Circles */}
-        {hudCircles.map((circle, i) => (
-          <motion.div
-            key={circle.id}
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1.25, opacity: [0, circle.o, 0] }}
-            transition={{
-              duration: circle.duration,
-              repeat: Infinity,
-              delay: i * 0.7,
-              ease: "easeOut",
-            }}
-            className="absolute rounded-full border-white/90 border-solid mix-blend-screen shadow-[0_0_12px_rgba(255,255,255,0.4)]"
-            style={{
-              width: circle.r * 2,
-              height: circle.r * 2,
-              borderWidth: circle.w,
-            }}
-          />
-        ))}
-
         {/* Users */}
         {nearbyUsers.map((user) => (
           <div
@@ -894,11 +903,85 @@ const GPS: React.FC<GPSProps> = ({
             </motion.div>
           </div>
         ))}
+        {/* 부웅-부웅 퍼지는 파동 (HUD Circles) */}
+        {hudCircles.map((circle, i) => (
+          <motion.div
+            key={`hud-${circle.id}`}
+            initial={{ scale: 1.25, opacity: 0 }}
+            animate={{ scale: 2, opacity: [0, circle.o, 0] }}
+            transition={{
+              duration: circle.duration,
+              repeat: Infinity,
+              delay: i * 0.7,
+              ease: "easeOut",
+            }}
+            className="absolute rounded-full border-white/90 border-solid mix-blend-screen shadow-[0_0_12px_rgba(255,255,255,0.4)] pointer-events-none"
+            style={{
+              width: circle.r * 2,
+              height: circle.r * 2,
+              borderWidth: circle.w,
+            }}
+          />
+        ))}
 
-        {/* Center Scanner */}
-        <div className="relative flex items-center justify-center w-[280px] h-[280px] rounded-full">
-          <div className="absolute inset-0 rounded-full border-[10px] border-white shadow-[0_0_80px_rgba(255,255,255,1)] z-10" />
-          <div className="w-[450px] h-[260px] overflow-visible relative flex items-center justify-center z-50">
+        {/* 뱅글뱅글 도는 사이버틱한 선들 (extraSegments) */}
+        <div className="absolute inset-[-50px] z-15 pointer-events-none flex items-center justify-center">
+          <svg
+            viewBox="0 0 420 420"
+            className="w-[420px] h-[420px] overflow-visible"
+          >
+            {extraSegments.map((seg, i) => (
+              <motion.circle
+                key={`seg-${i}`}
+                cx="210"
+                cy="210"
+                r={seg.r}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth={seg.w}
+                strokeDasharray={seg.d}
+                strokeLinecap="round"
+                style={{ filter: "drop-shadow(0 0 8px rgba(34,211,238,0.8))" }}
+                animate={{ rotate: 360 * seg.dir }}
+                transition={{
+                  duration: seg.s,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              />
+            ))}
+          </svg>
+        </div>
+        {/* ======================================================= */}
+        {/* 🌟 1. 레벨에 따라 크기가 변하는 두꺼운 흰색 원 */}
+        <motion.div
+          className="absolute z-10 pointer-events-none flex items-center justify-center"
+          // 💡 핵심: 현재 레벨 반경을 500m 고정 비율로 계산해서 넓이/높이에 적용!
+          animate={{
+            width: (currentMaxRadius / MAX_RADAR_DIST) * RADAR_UI_RADIUS * 2,
+            height: (currentMaxRadius / MAX_RADAR_DIST) * RADAR_UI_RADIUS * 2,
+          }}
+          transition={{ type: "spring", stiffness: 60, damping: 15 }} // 크기가 변할 때 튕기듯 부드러운 효과
+        >
+          {/* 1-1. 심장 박동처럼 바운스하는 실제 흰색 원 */}
+          <motion.div
+            className="w-full h-full rounded-full border-[4px] border-[#f8c6e7] shadow-[0_0_20px_rgba(255,176,205,0.8),inset_0_0_20px_rgba(255,176,205,0.8)]"
+            animate={{
+              scale: [1, 1.05, 1, 1.02, 1], // 크기 변화: 두근(크게) - 두근(작게) - 휴식
+              opacity: [0.8, 1, 0.85, 1, 0.8], // 커질 때 빛 번짐(투명도)도 살짝 밝아지게 디테일 추가!
+            }}
+            transition={{
+              duration: 2, // 2초마다 심장박동 반복
+              repeat: Infinity,
+              times: [0, 0.15, 0.3, 0.45, 1], // 박자감 조절 (두근-두근... 쉬고... 두근-두근...)
+              ease: "easeInOut",
+            }}
+          />
+        </motion.div>
+
+        {/* 🌟 2. 심장박동(이퀄라이저) 라인 (배경에 고정) */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <div className="w-[450px] h-[260px] overflow-visible relative flex items-center justify-center">
             <svg
               width="100%"
               height="80%"
@@ -910,13 +993,19 @@ const GPS: React.FC<GPSProps> = ({
                 d={centeredPath}
                 fill="none"
                 stroke="white"
-                strokeWidth="3"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                style={{
+                  filter:
+                    "drop-shadow(0 0 4px rgba(255,255,255,1)) drop-shadow(0 0 15px rgba(255,255,255,0.8)) drop-shadow(0 0 30px rgba(255,255,255,0.6))",
+                }}
                 animate={{
                   pathLength: [0, 1, 1, 1],
                   pathOffset: [0, 0, 0, 1],
-                  opacity: [0, 1, 1, 0],
+                  //opacity: [0, 1, 1, 0],
+                  scale: [1, 1.05, 1, 1.02, 1], // 크기 변화: 두근(크게) - 두근(작게) - 휴식
+                  opacity: [0.8, 1, 0.85, 1, 0.8],
                 }}
                 transition={{
                   duration: 5,
@@ -929,6 +1018,7 @@ const GPS: React.FC<GPSProps> = ({
           </div>
         </div>
       </div>
+
       {/* 4. 반경 설정 */}
       <div className="z-10 mb-10">
         <button
