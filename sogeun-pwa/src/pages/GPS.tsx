@@ -1305,25 +1305,26 @@ const GPS: React.FC<GPSProps> = ({
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              //transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[#F3F7FF]/70 rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl"
+              // 모바일 규격 대응: max-width 설정 및 중앙 정렬, 테두리 추가
+              className="fixed bottom-0 left-0 right-0 mx-auto max-w-md h-[80vh] bg-[#F3F7FF]/80 backdrop-blur-xl rounded-t-[40px] z-[200] p-6 flex flex-col shadow-2xl border-t border-x border-white/50"
             >
-              {/* 상단 헤더: 민트색 확인 버튼 */}
-              <div className="w-full flex justify-between items-center mb-4 px-2 ">
+              {/* 상단 드래그 핸들 (모바일 앱 느낌을 주는 요소) */}
+              <div className="w-12 h-1.5 bg-gray-300/50 rounded-full mx-auto mb-2" />
+              {/* 상단 헤더 */}
+              <div className="w-full flex justify-between items-center mb-2 px-2">
                 <button
                   onClick={() => setSelectedUser(null)}
                   className="p-2 text-[#4FD1C5]"
                 >
-                  <Icons.ChevronDown />
+                  <Icons.ChevronDown size={28} />
                 </button>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="text-[#4FD1C5] font-bold text-[16px] px-2"
+                  className="text-[#4FD1C5] font-bold text-[17px] px-2"
                 >
                   확인
                 </button>
-              </div>
-
+              </div>{" "}
               {/* 프로필 섹션 */}
               <div
                 className="flex flex-col items-center mb-5 pt-8 cursor-pointer active:scale-95 transition-transform"
@@ -1352,7 +1353,6 @@ const GPS: React.FC<GPSProps> = ({
                   {selectedUser.distance} 떨어져 있어요
                 </p>
               </div>
-
               {/* 앨범 정보 전체 */}
               <div className="flex flex-col items-center w-full px-4 mb-8">
                 <motion.div
@@ -1411,7 +1411,6 @@ const GPS: React.FC<GPSProps> = ({
                   </div>
                 </motion.div>
               </div>
-
               {/* 하단 버튼 영역: Glassmorphism 스타일로 교체 */}
               <div className="flex justify-center items-center gap-4 pb-12">
                 {/* 좋아요 버튼 (카운트 없음) */}
