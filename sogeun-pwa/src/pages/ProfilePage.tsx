@@ -155,13 +155,15 @@ export default function ProfilePage() {
       className="clean-profile-bg"
       style={{
         paddingTop: "60px",
-        paddingBottom: "120px",
+        paddingBottom: "150px", // 하단바 높이만큼 충분히 확보
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        width: "100%" /* vw 대신 100% 사용 */,
         minHeight: "100vh",
         background:
-          "linear-gradient(169deg, #f8c1e9 0%, #c3c3ec 34.81%, #9fc3e9 66.28%, #6bcda6 99.18%)",
+          "transparent" /* 배경은 index.css의 #root에서 처리하므로 투명하게 */,
+        position: "relative",
       }}
     >
       {/* 1. 상단 핸들 */}
@@ -417,8 +419,8 @@ export default function ProfilePage() {
       </div>
 
       {/* 7. 하단 내비게이션 */}
-      <div className="fixed bottom-0 left-0 w-full flex flex-col items-center z-[120] pointer-events-none pb-10">
-        <div className="pointer-events-auto w-[88%] h-[75px] bg-white/95 backdrop-blur-3xl rounded-[38px] flex justify-between items-center px-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] relative">
+      <div className="absolute bottom-0 left-0 w-full flex flex-col items-center z-[120] pointer-events-none pb-10">
+        <div className="pointer-events-auto w-[90%] h-[75px] bg-white/95 backdrop-blur-3xl rounded-[38px] flex justify-between items-center px-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] relative">
           <button
             onClick={() => navigate("/gps")}
             className="flex flex-col items-center text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
