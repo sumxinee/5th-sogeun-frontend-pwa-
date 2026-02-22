@@ -9,7 +9,16 @@ import musicPlanetIcon from "../assets/logo.png";
 // ------------------- [아이콘 컴포넌트] -------------------
 const Icons = {
   Pin: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
       <circle cx="12" cy="10" r="3"></circle>
     </svg>
@@ -20,18 +29,57 @@ const Icons = {
     </svg>
   ),
   Home: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-7 w-7"
+      width="28"
+      height="28"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+      />
     </svg>
   ),
   Plus: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-white" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="white">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-9 w-9 text-white"
+      width="36"
+      height="36"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="white"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={3}
+        d="M12 4v16m8-8H4"
+      />
     </svg>
   ),
   Profile: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-7 w-7"
+      width="28"
+      height="28"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
     </svg>
   ),
 };
@@ -40,14 +88,18 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   // 1. 상태(State) 생성
-  const [nickname, setNickname] = useState("음악듣는고양이");
-  const [profileImg, setProfileImg] = useState(
-    "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+  const [nickname, setNickname] = useState(
+    () => localStorage.getItem("profile_nickname") || "익명",
   );
-  
+  const [profileImg, setProfileImg] = useState(
+    "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+  );
+
   // 🔥 [수정됨] 검색창 열림/닫힘 상태 추가!
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchInitialTab, setSearchInitialTab] = useState<"search" | "likes">("search");
+  const [searchInitialTab, setSearchInitialTab] = useState<"search" | "likes">(
+    "search",
+  );
 
   // 2. useEffect: 컴포넌트가 마운트될 때 localStorage에서 데이터 불러오기
   useEffect(() => {
