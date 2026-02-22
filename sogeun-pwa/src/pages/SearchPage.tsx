@@ -56,7 +56,7 @@ const slideVariants = {
   }),
 };
 const api = axios.create({
-  baseURL: "https://pruxd7efo3.execute-api.ap-northeast-2.amazonaws.com/clean",
+  baseURL: "https://api.sogeun.cloud",
 });
 
 const SearchPage: React.FC<SearchPageProps> = ({

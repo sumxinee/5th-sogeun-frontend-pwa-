@@ -395,14 +395,7 @@ const GPS: React.FC<GPSProps> = ({
   });
   // 4. 레이더 장식용 회전 선들 (수정됨)
   const extraSegments = [
-    {
-      r: 140,
-      w: 4,
-      d: "120 280",
-      s: 8,
-      dir: 1,
-      color: "var(--sogun-cyan)",
-    }, // 가장 바깥쪽 두꺼운 파란 원호
+    // 가장 바깥쪽 두꺼운 파란 원호
     {
       r: 160, // 반지름 (가장 바깥쪽)
       w: 12, // 두께를 12 이상으로 대폭 키움 (사진의 느낌)
@@ -434,107 +427,99 @@ const GPS: React.FC<GPSProps> = ({
   // 5. 심장박동 Path
 
   const tripleHeartbeatPath =
-    "M -200 50 L 35 50 " +
+    "M -200 50 L 40 50 " +
     // 첫 번째 파동 (높이 25~75 유지)
-    "L 40 40 L 45 60 L 55 25 L 65 75 L 70 50 " +
+    "L 45 40 L 50 60 L 60 25 L 70 75 L 75 50 " +
     // 2. 파동 사이 간격 축소 (기존 60px -> 35px 정도로 좁힘)
-    "L 105 50 " +
+    "L 110 50 " +
     // 두 번째 파동 (간격에 맞춰 X축 좌표 당김)
-    "L 110 40 L 115 60 L 125 25 L 135 75 L 140 50 " +
+    "L 115 40 L 120 60 L 130 25 L 140 75 L 145 50 " +
     // 2. 파동 사이 간격 축소
-    "L 175 50 " +
+    "L 180 50 " +
     // 세 번째 파동 (간격에 맞춰 X축 좌표 당김)
-    "L 180 40 L 185 60 L 195 25 L 205 75 L 210 50 " +
+    "L 185 40 L 190 60 L 200 25 L 210 75 L 215 50 " +
     // 3. 오른쪽 끝 직선 길이를 더 길게 연장 (L 500 -> 650)
     "L 300 50";
   //----------------------------------------------------------
   useEffect(() => {
-    if (!token) return;
-    const ctrl = new AbortController();
+    // 필수 데이터가 없으면 실행 안 함
+    if (!token || !myLocation || !currentTrack) return;
 
-    const connectStream = async () => {
+    const ctrl = new AbortController();
+    let isConnected = false; // 중복 호출 방지 플래그
+
+    const connectAndStartBroadcast = async () => {
       try {
+        console.log("🚀 SSE 연결 시도...");
+
         await fetchEventSource(`${BASE_URL}/api/sse/stream`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "text/event-stream",
           },
-
           signal: ctrl.signal,
-          onopen: async (res) => {
-            if (res.ok) {
-              console.log("📡 sse 스트림 연결 성공");
-              // 약간의 딜레이를 주어 서버가 세션을 완전히 잡을 시간을 줍니다.
-              setTimeout(async () => {
-                try {
-                  // 🔥 핵심: token 외에 위치(myLocation)와 음악(currentTrack) 정보를 함께 보내야 합니다.
-                  if (myLocation && currentTrack) {
-                    const onRes = await broadcastAPI.on(
-                      token,
-                      myLocation,
-                      currentTrack,
-                    );
 
-                    if (onRes.ok) {
-                      console.log("📻 방송 송출 시작 (ON)");
-                    } else {
-                      console.error(
-                        "서버 내부 에러: 방송 송출을 시작할 수 없습니다. 상태코드:",
-                        onRes.status,
-                      );
-                    }
-                  } else {
-                    console.log(
-                      "⏳ 위치 또는 트랙 정보가 아직 준비되지 않아 ON 호출을 건너뜁니다.",
-                    );
-                  }
-                } catch (e) {
-                  console.error("ON 호출 실패", e);
+          onopen: async (res) => {
+            if (res.ok && !isConnected) {
+              console.log("📡 SSE 스트림 연결 성공");
+              isConnected = true;
+
+              // 연결 성공 후 방송 송출(ON) 호출
+              try {
+                const onRes = await broadcastAPI.on(
+                  token,
+                  myLocation,
+                  currentTrack,
+                );
+                if (onRes.ok) {
+                  console.log("📻 방송 송출 시작 (ON) 성공");
+                } else {
+                  console.error("❌ 방송 송출 시작 실패:", onRes.status);
                 }
-              }, 500);
+              } catch (e) {
+                console.error("ON 호출 중 예외 발생:", e);
+              }
             }
           },
+
           onmessage: (event) => {
             if (event.data !== "heartbeat") {
-              console.log("📻 방송 스트림 수신:", JSON.parse(event.data));
+              try {
+                const data = JSON.parse(event.data);
+                console.log("📻 방송 스트림 수신:", data);
+              } catch (e) {
+                console.log("수신 데이터 포맷 오류:", event.data);
+              }
             }
+          },
+
+          onerror: (err) => {
+            console.error("SSE 커넥션 에러:", err);
+            // 필요 시 여기서 ctrl.abort()를 호출하거나 재연결 로직 수행
           },
         });
       } catch (err) {
-        console.error("Stream 에러:", err);
+        console.error("Stream 초기화 에러:", err);
       }
     };
 
-    connectStream();
+    connectAndStartBroadcast();
+
     return () => {
-      broadcastAPI.off(token);
-      ctrl.abort();
+      console.log("🧹 정리 작업 시작");
+
+      ctrl.abort(); // SSE 연결 종료
     };
-  }, [token]);
-
+  }, [token, myLocation, currentTrack]);
   useEffect(() => {
-    const activateBroadcast = async () => {
-      // 1. 필요한 정보가 다 있는지 확인
-      if (token && myLocation && currentTrack) {
-        try {
-          console.log("🚀 모든 정보 준비 완료! 방송 시작 요청 중...");
-          const onRes = await broadcastAPI.on(token, myLocation, currentTrack);
-
-          if (onRes.ok) {
-            console.log("📻 방송 송출 시작 성공!");
-          } else {
-            console.error("❌ 방송 시작 실패:", onRes.status);
-          }
-        } catch (err) {
-          console.error("방송 시작 통신 에러:", err);
-        }
+    return () => {
+      if (token) {
+        console.log("🚫 앱 종료 또는 페이지 이동: 방송 종료");
+        broadcastAPI.off(token).catch(console.error);
       }
     };
-
-    activateBroadcast();
-    // 의존성 배열에 존재 여부를 감시하도록 설정
-  }, [token, !!myLocation, !!currentTrack]);
+  }, []);
   //--------------------------- sse- nearby --------------------------
 
   useEffect(() => {
@@ -946,75 +931,6 @@ const GPS: React.FC<GPSProps> = ({
             ))}
           </svg>
         </div>
-        {/* 1. 안쪽 레이어 (메인 - 선명하고 밝은 궤도) */}
-        <div className="absolute inset-[-50px] z-20 pointer-events-none flex items-center justify-center">
-          <svg
-            viewBox="0 0 420 420"
-            className="w-[420px] h-[420px] overflow-visible"
-          >
-            {extraSegments.map((seg, i) => {
-              // 핵심 수정: 기본 반지름 무시! 70부터 시작해서 40px씩 일정하게 띄웁니다.
-              const newRadius = 100 + i * 40;
-
-              return (
-                <motion.circle
-                  key={`seg-main-${i}`}
-                  cx="210"
-                  cy="210"
-                  r={newRadius}
-                  fill="none"
-                  stroke="rgba(164, 237, 248, 0.9)"
-                  strokeWidth={seg.w}
-                  strokeDasharray={seg.d}
-                  strokeLinecap="round"
-                  style={{
-                    filter: "drop-shadow(0 0 8px rgba(164, 237, 248, 0.9))",
-                  }}
-                  animate={{ rotate: 360 * seg.dir }}
-                  transition={{
-                    duration: seg.s,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                />
-              );
-            })}
-          </svg>
-        </div>
-
-        {/* 2. 바깥쪽 레이어 (배경 - 투명하고 넓게 퍼지는 궤도) */}
-        <div className="absolute inset-[-80px] z-10 pointer-events-none flex items-center justify-center">
-          <svg viewBox="0 0 420 420" className="w-full h-full overflow-visible">
-            {extraSegments2.map((seg, i) => {
-              // 바깥쪽 레이어는 메인보다 20px 밖에서 시작해서 똑같이 40px씩 띄웁니다.
-              const newRadiusBg = 180 + i * 40;
-
-              return (
-                <motion.circle
-                  key={`seg-bg-${i}`}
-                  cx="210"
-                  cy="210"
-                  r={newRadiusBg}
-                  fill="none"
-                  stroke="rgba(34,211,238,0.6)"
-                  strokeWidth={seg.w * 0.8}
-                  strokeDasharray={seg.d}
-                  strokeLinecap="round"
-                  style={{
-                    filter: "drop-shadow(0 0 12px rgba(34,211,238,0.6))",
-                  }}
-                  animate={{ rotate: 360 * (seg.dir * -1) }}
-                  transition={{
-                    duration: seg.s * 1.5,
-                    repeat: Infinity,
-                    ease: "linear",
-                    delay: i * 0.1,
-                  }}
-                />
-              );
-            })}
-          </svg>
-        </div>
 
         {/* Users */}
         {nearbyUsers.map((user) => (
@@ -1138,7 +1054,7 @@ const GPS: React.FC<GPSProps> = ({
                 animate={{
                   pathLength: [0, 1, 1, 1],
                   pathOffset: [0, 0, 0, 1],
-                  scale: [1, 1.05, 1, 1.02, 1],
+                  scale: [1, 1.02, 1, 1, 1],
                   opacity: [0.8, 1, 0.85, 1, 0.8],
                 }}
                 transition={{
