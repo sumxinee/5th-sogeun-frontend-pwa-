@@ -45,7 +45,7 @@ export default function ProfilePage() {
     "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
   );
   
-  // 검색창 열림/닫힘 상태
+  // 🔥 [수정됨] 검색창 열림/닫힘 상태 추가!
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInitialTab, setSearchInitialTab] = useState<"search" | "likes">("search");
 
@@ -421,6 +421,6 @@ export default function ProfilePage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div> /* 🔥 [수정됨] 맨 끝 닫는 태그를 </motion.div>에서 </div>로 수정! */
   );
 }
