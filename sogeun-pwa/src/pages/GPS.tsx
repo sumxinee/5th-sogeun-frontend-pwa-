@@ -39,6 +39,7 @@ interface HUDCircle {
   w: number;
   o: number;
   duration: number;
+  delay: number;
 }
 
 interface DetectedUser {
@@ -367,8 +368,8 @@ const GPS: React.FC<GPSProps> = ({
       id: i,
       top: `${Math.random() * 100}%`,
       left: `${Math.random() * 100}%`,
-      size: Math.random() * 4 + 2,
-      opacity: Math.random() * 0.5 + 0.4,
+      size: Math.random() * 6 + 2,
+      opacity: Math.random() * 0.7 + 0.4,
       duration: Math.random() * 20 + 20,
     })),
   );
@@ -376,20 +377,11 @@ const GPS: React.FC<GPSProps> = ({
   // 3. HUD 서클
   const [hudCircles] = useState<HUDCircle[]>(() => {
     const circles: HUDCircle[] = [];
-    let currentR = 20;
-    for (let i = 0; i < 3; i++) {
-      currentR += Math.floor(Math.random() * 20) + 15;
-      circles.push({
-        id: i,
-        r: currentR,
-        w: Math.random() * 1.5 + 1.2,
-        o: Math.random() * 0.3 + 0.6,
-        duration: Math.random() * 2 + 3.5,
-      });
-    }
+    // 💡 duration을 2에서 4로 변경해서 더 오랫동안 멀리 퍼지게 합니다.
+    circles.push({ id: 1, r: 0, w: 1.5, o: 0.6, duration: 4, delay: 0 });
+    circles.push({ id: 2, r: 0, w: 1.5, o: 0.6, duration: 4, delay: 0.9 });
     return circles;
   });
-
   // 4. 레이더 장식용 회전 선들 (수정됨)
   const extraSegments = [
     {
@@ -410,18 +402,42 @@ const GPS: React.FC<GPSProps> = ({
     },
     {
       r: 90,
-      w: 2,
+      w: 3,
       d: "180 180",
       s: 12,
       dir: 1,
       color: "rgba(34, 211, 238, 0.4)",
     },
   ];
+  const extraSegments2 = [
+    {
+      r: 140,
+      w: 4,
+      d: "120 280",
+      s: 8,
+      dir: 1,
+      color: "var(--sogun-cyan)",
+    }, // 가장 바깥쪽 두꺼운 파란 원호
+  ];
 
   // 5. 심장박동 Path
   const centeredPath =
     "M -100 50 H 35 L 43 35 L 51 65 L 59 50 H 92 L 100 25 L 108 75 L 116 50 H 149 L 157 35 L 165 65 L 173 50 H 300";
 
+  const tripleHeartbeatPath =
+    "M -250 50 L 15 50 " +
+    // 첫 번째 파동 (모양 유지)
+    "L 20 35 L 25 60 L 35 15 L 45 85 L 50 50 " +
+    // 2. 첫 번째 간격 (더 넓게: 25px -> 60px 간격으로 늘림)
+    "L 110 50 " +
+    // 두 번째 파동 (넓어진 간격에 맞춰서 좌표 이동)
+    "L 115 35 L 120 60 L 130 15 L 140 85 L 145 50 " +
+    // 3. 두 번째 간격 (더 넓게: 25px -> 60px 간격으로 늘림)
+    "L 205 50 " +
+    // 세 번째 파동 (넓어진 간격에 맞춰서 좌표 이동)
+    "L 210 35 L 215 60 L 225 15 L 235 85 L 240 50 " +
+    // 4. 오른쪽 끝 일직선 (더 길게: 350 -> 550으로 늘림)
+    "L 500 50";
   //----------------------------------------------------------
   useEffect(() => {
     if (!token) return;
@@ -786,21 +802,21 @@ const GPS: React.FC<GPSProps> = ({
         </div>
       </div>
       {/* 3. 메인 레이더 */}
-      <div className="relative flex items-center justify-center w-full max-w-[300px] aspect-square my-6">
+      <div className="relative flex items-center justify-center w-full max-w-[300px] aspect-square my-8">
         {/* ① 100m ~ 500m 고정 배경 링 (과녁판) */}
         {[100, 200, 300, 400, 500].map((dist) => {
           const r = (dist / MAX_RADAR_DIST) * RADAR_UI_RADIUS; // 거리별 픽셀 반지름
           return (
             <div
               key={`ring-${dist}`}
-              className="absolute rounded-full border border-white/20 flex items-start justify-center pointer-events-none"
+              className="absolute rounded-full border-2 border-white/20 flex items-start justify-center pointer-events-none"
               style={{
                 width: r * 2,
                 height: r * 2,
               }}
             >
               {/* 거리 라벨 텍스트 */}
-              <span className="text-white/40 text-[9px] -mt-3.5 bg-transparent px-1 font-medium tracking-widest">
+              <span className="text-white/80 text-[9px] -mt-3.5 bg-transparent px-1 font-medium tracking-widest">
                 {dist}m
               </span>
             </div>
@@ -832,29 +848,73 @@ const GPS: React.FC<GPSProps> = ({
           />
         ))}
 
-        {/* extraSegments */}
-        <div className="absolute inset-[-80px] z-15 pointer-events-none">
+        {/* 1. 안쪽 레이어 (메인 - 선명하고 밝은 궤도) */}
+        <div className="absolute inset-[-50px] z-20 pointer-events-none flex items-center justify-center">
+          <svg
+            viewBox="0 0 420 420"
+            className="w-[420px] h-[420px] overflow-visible"
+          >
+            {extraSegments.map((seg, i) => {
+              // 핵심 수정: 기본 반지름 무시! 70부터 시작해서 40px씩 일정하게 띄웁니다.
+              const newRadius = 100 + i * 40;
+
+              return (
+                <motion.circle
+                  key={`seg-main-${i}`}
+                  cx="210"
+                  cy="210"
+                  r={newRadius}
+                  fill="none"
+                  stroke="rgba(164, 237, 248, 0.9)"
+                  strokeWidth={seg.w}
+                  strokeDasharray={seg.d}
+                  strokeLinecap="round"
+                  style={{
+                    filter: "drop-shadow(0 0 8px rgba(164, 237, 248, 0.9))",
+                  }}
+                  animate={{ rotate: 360 * seg.dir }}
+                  transition={{
+                    duration: seg.s,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* 2. 바깥쪽 레이어 (배경 - 투명하고 넓게 퍼지는 궤도) */}
+        <div className="absolute inset-[-80px] z-10 pointer-events-none flex items-center justify-center">
           <svg viewBox="0 0 420 420" className="w-full h-full overflow-visible">
-            {extraSegments.map((seg, i) => (
-              <motion.circle
-                key={i}
-                cx="210"
-                cy="210"
-                r={seg.r}
-                fill="none"
-                stroke="rgba(0, 255, 255, 0.3)"
-                strokeWidth={seg.w}
-                strokeDasharray={seg.d}
-                strokeLinecap="round"
-                style={{ filter: "drop-shadow(0 0 8px var(--sogun-cyan))" }}
-                animate={{ rotate: 360 * seg.dir }}
-                transition={{
-                  duration: seg.s,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              />
-            ))}
+            {extraSegments2.map((seg, i) => {
+              // 바깥쪽 레이어는 메인보다 20px 밖에서 시작해서 똑같이 40px씩 띄웁니다.
+              const newRadiusBg = 180 + i * 40;
+
+              return (
+                <motion.circle
+                  key={`seg-bg-${i}`}
+                  cx="210"
+                  cy="210"
+                  r={newRadiusBg}
+                  fill="none"
+                  stroke="rgba(34,211,238,0.6)"
+                  strokeWidth={seg.w * 0.8}
+                  strokeDasharray={seg.d}
+                  strokeLinecap="round"
+                  style={{
+                    filter: "drop-shadow(0 0 12px rgba(34,211,238,0.6))",
+                  }}
+                  animate={{ rotate: 360 * (seg.dir * -1) }}
+                  transition={{
+                    duration: seg.s * 1.5,
+                    repeat: Infinity,
+                    ease: "linear",
+                    delay: i * 0.1,
+                  }}
+                />
+              );
+            })}
           </svg>
         </div>
 
@@ -903,57 +963,9 @@ const GPS: React.FC<GPSProps> = ({
             </motion.div>
           </div>
         ))}
-        {/* 부웅-부웅 퍼지는 파동 (HUD Circles) */}
-        {hudCircles.map((circle, i) => (
-          <motion.div
-            key={`hud-${circle.id}`}
-            initial={{ scale: 1.25, opacity: 0 }}
-            animate={{ scale: 2, opacity: [0, circle.o, 0] }}
-            transition={{
-              duration: circle.duration,
-              repeat: Infinity,
-              delay: i * 0.7,
-              ease: "easeOut",
-            }}
-            className="absolute rounded-full border-white/90 border-solid mix-blend-screen shadow-[0_0_12px_rgba(255,255,255,0.4)] pointer-events-none"
-            style={{
-              width: circle.r * 2,
-              height: circle.r * 2,
-              borderWidth: circle.w,
-            }}
-          />
-        ))}
 
-        {/* 뱅글뱅글 도는 사이버틱한 선들 (extraSegments) */}
-        <div className="absolute inset-[-50px] z-15 pointer-events-none flex items-center justify-center">
-          <svg
-            viewBox="0 0 420 420"
-            className="w-[420px] h-[420px] overflow-visible"
-          >
-            {extraSegments.map((seg, i) => (
-              <motion.circle
-                key={`seg-${i}`}
-                cx="210"
-                cy="210"
-                r={seg.r}
-                fill="none"
-                stroke={seg.color}
-                strokeWidth={seg.w}
-                strokeDasharray={seg.d}
-                strokeLinecap="round"
-                style={{ filter: "drop-shadow(0 0 8px rgba(34,211,238,0.8))" }}
-                animate={{ rotate: 360 * seg.dir }}
-                transition={{
-                  duration: seg.s,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              />
-            ))}
-          </svg>
-        </div>
         {/* ======================================================= */}
-        {/* 🌟 1. 레벨에 따라 크기가 변하는 두꺼운 흰색 원 */}
+        {/* 🌟 1. 레벨에 따라 크기가 변하는 두꺼운 핑크네온 원 */}
         <motion.div
           className="absolute z-10 pointer-events-none flex items-center justify-center"
           // 💡 핵심: 현재 레벨 반경을 500m 고정 비율로 계산해서 넓이/높이에 적용!
@@ -963,7 +975,32 @@ const GPS: React.FC<GPSProps> = ({
           }}
           transition={{ type: "spring", stiffness: 60, damping: 15 }} // 크기가 변할 때 튕기듯 부드러운 효과
         >
-          {/* 1-1. 심장 박동처럼 바운스하는 실제 흰색 원 */}
+          {/* 부웅-부웅 퍼지는 파동 (HUD Circles) */}
+          {hudCircles.map((circle) => (
+            <motion.div
+              key={`hud-${circle.id}`}
+              // 💡 핵심: 시작 크기(1)가 내 레벨 원의 크기와 똑같습니다.
+              // 1.8배까지 퍼지면서 사라집니다.
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 5, opacity: [0, circle.o, 0] }}
+              transition={{
+                duration: circle.duration,
+                repeat: Infinity,
+                delay: circle.delay, // 💡 0초, 0.6초 (심장 뛰는 박자!)
+                ease: "easeOut",
+              }}
+              className="absolute rounded-full border-[3px] border-white/60 border-solid mix-blend-screen pointer-events-none"
+              style={{
+                // 💡 핵심: 너비/높이를 '내 레벨 원(currentMaxRadius)'과 완벽히 똑같이 맞춥니다!
+                width:
+                  (currentMaxRadius / MAX_RADAR_DIST) * RADAR_UI_RADIUS * 2,
+                height:
+                  (currentMaxRadius / MAX_RADAR_DIST) * RADAR_UI_RADIUS * 2,
+                borderWidth: circle.w,
+              }}
+            />
+          ))}
+          {/* 1-1. 심장 박동처럼 바운스하는 실제 핑크 원 */}
           <motion.div
             className="w-full h-full rounded-full border-[4px] border-[#f8c6e7] shadow-[0_0_20px_rgba(255,176,205,0.8),inset_0_0_20px_rgba(255,176,205,0.8)]"
             animate={{
@@ -985,12 +1022,12 @@ const GPS: React.FC<GPSProps> = ({
             <svg
               width="100%"
               height="80%"
-              viewBox="0 0 200 100"
+              viewBox="30 0 200 100"
               preserveAspectRatio="none"
               className="overflow-visible pointer-events-none"
             >
               <motion.path
-                d={centeredPath}
+                d={tripleHeartbeatPath}
                 fill="none"
                 stroke="white"
                 strokeWidth="2.5"
@@ -1003,8 +1040,7 @@ const GPS: React.FC<GPSProps> = ({
                 animate={{
                   pathLength: [0, 1, 1, 1],
                   pathOffset: [0, 0, 0, 1],
-                  //opacity: [0, 1, 1, 0],
-                  scale: [1, 1.05, 1, 1.02, 1], // 크기 변화: 두근(크게) - 두근(작게) - 휴식
+                  scale: [1, 1.05, 1, 1.02, 1],
                   opacity: [0.8, 1, 0.85, 1, 0.8],
                 }}
                 transition={{
