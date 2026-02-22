@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-
+import splashImg from "./assets/first.png";
 // 페이지 컴포넌트들
 import AuthPage from "./pages/AuthPage";
 import GPS from "./pages/GPS";
@@ -16,6 +16,51 @@ import SongEditPage from "./pages/SongEditPage";
 import type { Track } from "./pages/SearchPage";
 
 const BASE_URL = "https://api.sogeun.cloud";
+
+const Splash = () => (
+  <motion.div
+    initial={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.5 }}
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      // 이미지의 전체적인 톤과 맞춘 배경색 (혹은 그라데이션)
+      background: "rgba(255, 255, 255, 0.2)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 9999,
+      overflow: "hidden",
+    }}
+  >
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "430px", // 일반적인 스마트폰 최대 너비 제한
+        height: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#fff", // 이미지 자체 배경이 흰색에 가까울 경우
+        boxShadow: "0 0 20px rgba(0,0,0,0.1)", // PC에서 볼 때 경계선이 살짝 보이게 (선택사항)
+      }}
+    >
+      <img
+        src={splashImg}
+        alt="Splash"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover", // 너비를 제한했으므로 이제 cover를 써도 예쁘게 나옵니다
+        }}
+      />
+    </div>
+  </motion.div>
+);
 
 // MainScreen에서 발생하는 Props 전달 에러를 방지하기 위해 래퍼 컴포넌트 정리
 const MainScreen = ({
@@ -77,6 +122,7 @@ const MainScreen = ({
 };
 
 const App = () => {
+  const [isAppLoading, setIsAppLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [bgmUrl, setBgmUrl] = useState<string>("");
   const [myLocation, setMyLocation] = useState<{
@@ -96,6 +142,12 @@ const App = () => {
   }, []);
 
   const cleanToken = getCleanToken();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAppLoading(false);
+    }, 2500); // 2.5초 후 앱 시작
+    return () => clearTimeout(timer);
+  }, []);
 
   // 1. 전역 위치 추적 및 서버 업데이트
   useEffect(() => {
@@ -210,32 +262,36 @@ const App = () => {
   };
 
   return (
-    <BrowserRouter>
-      {/* 전역 오디오: 끊김 없는 재생 보장 */}
-      <audio ref={audioRef} src={bgmUrl} loop autoPlay />
-      <Routes>
-        <Route path="/" element={<AuthPage />} />
-        <Route
-          path="/gps"
-          element={
-            <MainScreen
-              currentTrack={currentTrack}
-              bgmUrl={bgmUrl}
-              setBgmUrl={setBgmUrl}
-              handleSelectTrack={handleSelectTrack}
-              myLocation={myLocation}
-              serverUsers={serverUsers}
+    <>
+      <AnimatePresence>{isAppLoading && <Splash />}</AnimatePresence>
+
+      {!isAppLoading && (
+        <BrowserRouter>
+          <audio ref={audioRef} src={bgmUrl} loop autoPlay />
+          <Routes>
+            <Route path="/" element={<AuthPage />} />
+            <Route
+              path="/gps"
+              element={
+                <MainScreen
+                  currentTrack={currentTrack}
+                  bgmUrl={bgmUrl}
+                  setBgmUrl={setBgmUrl}
+                  handleSelectTrack={handleSelectTrack}
+                  myLocation={myLocation}
+                  serverUsers={serverUsers}
+                />
+              }
             />
-          }
-        />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/edit" element={<ProfileEditPage />} />
-        <Route path="/user/:id" element={<OtherUserProfilePage />} />
-        <Route path="/sogeun-songs" element={<SogeunSongsPage />} />
-        <Route path="/profile/edit/song" element={<SongEditPage />} />
-      </Routes>
-    </BrowserRouter>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/edit" element={<ProfileEditPage />} />
+            <Route path="/user/:id" element={<OtherUserProfilePage />} />
+            <Route path="/sogeun-songs" element={<SogeunSongsPage />} />
+            <Route path="/profile/edit/song" element={<SongEditPage />} />
+          </Routes>
+        </BrowserRouter>
+      )}
+    </>
   );
 };
-
 export default App;

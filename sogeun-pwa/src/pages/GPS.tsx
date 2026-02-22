@@ -1325,7 +1325,13 @@ const GPS: React.FC<GPSProps> = ({
               </div>
 
               {/* 프로필 섹션 */}
-              <div className="flex flex-col items-center mb-5 pt-8">
+              <div
+                className="flex flex-col items-center mb-5 pt-8 cursor-pointer active:scale-95 transition-transform"
+                onClick={() => {
+                  // 상대방의 ID를 가지고 프로필 페이지로 이동 (id가 number인 점 확인)
+                  navigate(`/user/${selectedUser.id}`);
+                }}
+              >
                 <div className="w-24 h-24 rounded-full mb-6 shadow-inner overflow-hidden border-2 border-white">
                   {selectedUser.artworkUrl && (
                     <img
