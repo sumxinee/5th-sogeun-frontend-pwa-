@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/:path*",
-      "destination": "http://15.164.164.66/:path*"
+      "source": "/api/:path*",
+      "destination": "https://api.sogeun.cloud/api/:path*"
     }
   ]
 }
