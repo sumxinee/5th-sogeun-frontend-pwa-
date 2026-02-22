@@ -5,7 +5,7 @@ import axios from "axios";
 import SearchPage from "./SearchPage";
 import type { Track } from "./SearchPage";
 import "../index.css";
-import musicPlanetIcon from "../assets/logo.png";
+import musicPlanetIcon from "../assets/musicPlanetIcon.png";
 import { LEVEL_CONFIG } from "../data/levelConfig";
 
 // ------------------- [아이콘 컴포넌트] -------------------

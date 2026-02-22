@@ -8,7 +8,7 @@ import { accessTokenAtom, numericUserIdAtom } from "../store/auth"; // 토큰 �
 import { locationAtom } from "../store/location"; // 기존에 있던 위치 아톰 활용
 import { currentTrackAtom, isPlayingAtom } from "../store/music";
 import type { Track } from "./SearchPage";
-import musicPlanetIcon from "../assets/logo.png";
+import musicPlanetIcon from "../assets/musicPlanetIcon.png";
 import { Heart, ThumbsUp } from "lucide-react";
 import { LEVEL_CONFIG } from "../data/levelConfig";
 
