@@ -244,8 +244,10 @@ const GPS: React.FC<GPSProps> = ({
   // 2. 좋아요(하트) 버튼 클릭 시 서버 전송 함수 (검색창/라이브러리 동기화)
   const handleLikeToggle = async () => {
     if (!selectedUser || !token) return;
+    console.log("전송되는 토큰:", `Bearer ${token}`);
     const prevLiked = isLiked;
     setIsLiked(!prevLiked); // UI 즉시 업데이트
+
     try {
       const res = await fetch(`${BASE_URL}/api/update/music/likes`, {
         method: "POST",
@@ -264,7 +266,11 @@ const GPS: React.FC<GPSProps> = ({
         }),
       });
 
-      if (!res.ok) throw new Error("서버 저장 실패");
+      if (!res.ok) {
+        const errorData = await res.json(); // 서버에서 보내주는 에러 메시지 확인
+        console.log("서버 응답 에러 상세:", errorData);
+        throw new Error(errorData.message || "서버 저장 실패");
+      }
       if (!prevLiked) console.log("💖 내 보관함에 노래가 추가되었습니다!");
       else console.log("💔 내 보관함에서 노래가 제거되었습니다.");
     } catch (error) {
@@ -272,87 +278,6 @@ const GPS: React.FC<GPSProps> = ({
       console.error("좋아요 통신 실패:", error);
     }
   };
-  // 명세서 기반 API 호출 함수들
-  const broadcastAPI = {
-    // 음악 송출 ON
-    on: async (
-      token: string,
-      location: { lat: number; lon: number },
-      track: any,
-    ) =>
-      fetch(`${BASE_URL}/api/broadcast/on`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          lat: location.lat,
-          lon: location.lon,
-          music: {
-            trackId: track.trackId || track.id, // 서버 명세에 맞춰 ID 전달
-            trackName: track.trackName,
-            artistName: track.artistName,
-            artworkUrl: track.artworkUrl100,
-            previewUrl: track.previewUrl,
-          },
-        }),
-      }),
-
-    // 음악 송출 OFF
-    off: async (token: string) =>
-      fetch(`${BASE_URL}/api/broadcast/off`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-
-    // 송출 중인 노래 변경
-    changeMusic: async (token: string, musicData: any) =>
-      fetch(`${BASE_URL}/api/broadcast/changemusic`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(musicData),
-      }),
-  };
-  // selectedUser가 바뀔 때마다 해당 유저의 추천 정보를 가져오는 로직 추가
-  useEffect(() => {
-    const checkInitialLikeStatus = async () => {
-      if (!selectedUser || !token) return;
-
-      try {
-        const res = await fetch(`${BASE_URL}/api/library/likes`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const likedList = await res.json();
-
-        // 💡 [수정된 부분] 변수명이 title이든 musicName이든, trackId든 다 걸러내도록 강화!
-        const isAlreadyLiked = likedList.some((item: any) => {
-          // 1. 혹시 서버가 trackId나 id로 준다면 가장 정확한 비교!
-          const isSameId =
-            String(item.trackId || item.id) === String(selectedUser.id);
-
-          // 2. 이름으로 비교할 경우 (title/musicName 모두 허용)
-          const serverTitle = item.title || item.musicName;
-          const serverArtist = item.artist || item.artistName;
-          const isSameName =
-            serverTitle === selectedUser.song &&
-            serverArtist === selectedUser.artist;
-
-          // 둘 중 하나라도 맞으면 '이미 좋아요 한 노래'로 인정!
-          return isSameId || isSameName;
-        });
-
-        setIsLiked(isAlreadyLiked);
-      } catch (err) {
-        console.error("초기 상태 로딩 실패:", err);
-      }
-    };
-
-    checkInitialLikeStatus();
-  }, [selectedUser, token]);
 
   const toggleBottomSheetMusic = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -695,6 +620,88 @@ const GPS: React.FC<GPSProps> = ({
     // 3. [핵심] 목데이터 + 서버 데이터를 합쳐서 세팅
     setNearbyUsers([mockUser, ...updatedUsers]);
   }, [myLocation, serverUsers]);
+
+  // 명세서 기반 API 호출 함수들
+  const broadcastAPI = {
+    // 음악 송출 ON
+    on: async (
+      token: string,
+      location: { lat: number; lon: number },
+      track: any,
+    ) =>
+      fetch(`${BASE_URL}/api/broadcast/on`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lat: location.lat,
+          lon: location.lon,
+          music: {
+            trackId: track.trackId || track.id, // 서버 명세에 맞춰 ID 전달
+            trackName: track.trackName,
+            artistName: track.artistName,
+            artworkUrl: track.artworkUrl100,
+            previewUrl: track.previewUrl,
+          },
+        }),
+      }),
+
+    // 음악 송출 OFF
+    off: async (token: string) =>
+      fetch(`${BASE_URL}/api/broadcast/off`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+
+    // 송출 중인 노래 변경
+    changeMusic: async (token: string, musicData: any) =>
+      fetch(`${BASE_URL}/api/broadcast/changemusic`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(musicData),
+      }),
+  };
+  // selectedUser가 바뀔 때마다 해당 유저의 추천 정보를 가져오는 로직 추가
+  useEffect(() => {
+    const checkInitialLikeStatus = async () => {
+      if (!selectedUser || !token) return;
+
+      try {
+        const res = await fetch(`${BASE_URL}/api/library/likes`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const likedList = await res.json();
+
+        // 💡 [수정된 부분] 변수명이 title이든 musicName이든, trackId든 다 걸러내도록 강화!
+        const isAlreadyLiked = likedList.some((item: any) => {
+          // 1. 혹시 서버가 trackId나 id로 준다면 가장 정확한 비교!
+          const isSameId =
+            String(item.trackId || item.id) === String(selectedUser.id);
+
+          // 2. 이름으로 비교할 경우 (title/musicName 모두 허용)
+          const serverTitle = item.title || item.musicName;
+          const serverArtist = item.artist || item.artistName;
+          const isSameName =
+            serverTitle === selectedUser.song &&
+            serverArtist === selectedUser.artist;
+
+          // 둘 중 하나라도 맞으면 '이미 좋아요 한 노래'로 인정!
+          return isSameId || isSameName;
+        });
+
+        setIsLiked(isAlreadyLiked);
+      } catch (err) {
+        console.error("초기 상태 로딩 실패:", err);
+      }
+    };
+
+    checkInitialLikeStatus();
+  }, [selectedUser, token]);
 
   // ------------------- [기능 3: 유저 거리 계산 로직] -------------------
   /*useEffect(() => {
